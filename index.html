@@ -2129,109 +2129,197 @@ Keluar
 
 function tampilkanLogin(){
 
-document.getElementById("halaman").innerHTML=`
+  document.getElementById("halaman").innerHTML=`
 
-<div class="judul">
-👤 Masuk ke BELMALT
-</div>
+  <div class="judul">
+  👤 Masuk ke BELMALT
+  </div>
 
-<div class="card login-box">
+  <div class="card login-box">
 
-<div class="avatar">
-👤
-</div>
+    <div class="avatar">
+    👤
+    </div>
 
-<div class="form-group">
+    <div class="form-group">
 
-<label>Nama</label>
+      <label>Nama</label>
 
-<input
-id="loginNama"
-type="text"
-placeholder="Nama kamu">
+      <input
+      id="loginNama"
+      type="text"
+      placeholder="Nama kamu">
 
-</div>
+    </div>
 
-<div class="form-group">
+    <div class="form-group">
 
-<label>Email</label>
+      <label>Email</label>
 
-<input
-id="loginEmail"
-type="email"
-placeholder="nama@email.com">
+      <input
+      id="loginEmail"
+      type="email"
+      placeholder="nama@email.com">
 
-</div>
+    </div>
 
-<button
-class="checkout"
-onclick="loginDemo()">
+    <div class="form-group">
 
-Masuk
+      <label>Password</label>
 
-</button>
+      <input
+      id="loginPassword"
+      type="password"
+      placeholder="Minimal 6 karakter">
 
-<p style="
-font-size:11px;
-color:#777;
-text-align:center;
-margin-top:12px">
+    </div>
 
-Versi ini masih mode demo.
-Login akan kita hubungkan ke Supabase.
+    <button
+    class="checkout"
+    onclick="loginDemo()">
 
-</p>
+    Masuk
 
-</div>
+    </button>
 
-`;
+    <button
+    class="checkout"
+    style="margin-top:10px;background:#fff;color:#333;border:1px solid #ddd"
+    onclick="daftarAkun()">
 
-}
+    Daftar Akun Baru
 
+    </button>
 
-function loginDemo(){
+    <p style="
+    font-size:11px;
+    color:#777;
+    text-align:center;
+    margin-top:12px">
 
-const nama=
-document.getElementById("loginNama")
-.value.trim();
+    Gunakan email dan password untuk masuk ke BELMALT.
 
-const email=
-document.getElementById("loginEmail")
-.value.trim();
+    </p>
 
-if(nama.length<2){
+  </div>
 
-pesan("Masukkan nama");
-
-return;
-
-}
-
-if(!email.includes("@")){
-
-pesan("Masukkan email yang benar");
-
-return;
+  `;
 
 }
 
-pengguna={
-nama,
-email
-};
+async function loginDemo(){
 
-localStorage.setItem(
-"penggunaBELMALT",
-JSON.stringify(pengguna)
-);
+  const email =
+    document.getElementById("loginEmail")
+    .value.trim();
 
-pesan("Berhasil masuk ke BELMALT 👋");
+  const password =
+    document.getElementById("loginPassword")
+    .value;
 
-akun();
+  if(!email.includes("@")){
+    pesan("Masukkan email yang benar");
+    return;
+  }
 
+  if(password.length < 6){
+    pesan("Password minimal 6 karakter");
+    return;
+  }
+
+  const { data, error } =
+    await supabaseClient.auth.signInWithPassword({
+      email: email,
+      password: password
+    });
+
+  if(error){
+    pesan("Login gagal: " + error.message);
+    return;
+  }
+
+  const nama =
+    document.getElementById("loginNama")
+    ?.value.trim() || "";
+
+  const pengguna = {
+    nama: nama,
+    email: email,
+    id: data.user.id
+  };
+
+  localStorage.setItem(
+    "penggunaBELMALT",
+    JSON.stringify(pengguna)
+  );
+
+  pesan("Berhasil masuk ke BELMALT 👋");
+
+  akun();
 }
 
+async function daftarAkun(){
 
+  const nama =
+    document.getElementById("loginNama")
+    .value.trim();
+
+  const email =
+    document.getElementById("loginEmail")
+    .value.trim();
+
+  const password =
+    document.getElementById("loginPassword")
+    .value;
+
+  if(nama.length < 2){
+    pesan("Masukkan nama kamu");
+    return;
+  }
+
+  if(!email.includes("@")){
+    pesan("Masukkan email yang benar");
+    return;
+  }
+
+  if(password.length < 6){
+    pesan("Password minimal 6 karakter");
+    return;
+  }
+
+  const { data, error } =
+    await supabaseClient.auth.signUp({
+      email: email,
+      password: password
+    });
+
+  if(error){
+    pesan("Pendaftaran gagal: " + error.message);
+    return;
+  }
+
+  if(data.user){
+
+    const { error: profileError } =
+      await supabaseClient
+      .from("profiles")
+      .upsert({
+        id: data.user.id,
+        role: "buyer"
+      });
+
+    if(profileError){
+      pesan("Akun dibuat, tetapi profil gagal disimpan.");
+      return;
+    }
+  }
+
+  pesan("Akun berhasil dibuat 🎉");
+
+  document.getElementById("loginPassword").value = "";
+
+}
+  
 function logout(){
 
 pengguna=null;
