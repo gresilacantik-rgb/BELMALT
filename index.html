@@ -2496,9 +2496,30 @@ function tambahProduk(){
 }
 
 async function simpanProduk(){
+async function simpanProduk(){
 
   if(!pengguna || !pengguna.id){
     pesan("Silakan login terlebih dahulu");
+    return;
+  }
+
+  // Cari toko milik pengguna yang sedang login
+  const { data: toko, error: tokoError } =
+    await supabaseClient
+    .from("shops")
+    .select("id")
+    .eq("owner_id", pengguna.id)
+    .maybeSingle();
+
+  if(tokoError){
+    console.error(tokoError);
+    pesan("Gagal mencari toko: " + tokoError.message);
+    return;
+  }
+
+  if(!toko){
+    pesan("Kamu belum memiliki toko. Silakan buka toko terlebih dahulu.");
+    tokoSaya();
     return;
   }
 
@@ -2559,7 +2580,8 @@ async function simpanProduk(){
       description: deskripsi,
       image_url: gambar || null,
       active: true,
-      seller_id: pengguna.id
+      seller_id: pengguna.id,
+      shop_id: toko.id
     })
     .select()
     .single();
