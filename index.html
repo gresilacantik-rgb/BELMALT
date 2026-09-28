@@ -2223,47 +2223,98 @@ function akun(){
 
 }
 
-function tokoSaya(){
+async function tokoSaya(){
 
+  if(!pengguna || !pengguna.id){
+    pesan("Silakan login terlebih dahulu");
+    return;
+  }
+
+  const { data: toko, error } =
+    await supabaseClient
+    .from("shops")
+    .select("*")
+    .eq("owner_id", pengguna.id)
+    .maybeSingle();
+
+  if(error){
+    console.error(error);
+    pesan("Gagal memeriksa toko: " + error.message);
+    return;
+  }
+
+  // BELUM PUNYA TOKO
+  if(!toko){
+
+    document.getElementById("halaman").innerHTML=`
+
+      <div class="judul">
+        🏪 Toko Saya
+      </div>
+
+      <div class="card">
+
+        <h3>Buka Toko Kamu</h3>
+
+        <p style="font-size:13px;color:#777">
+          Kamu belum memiliki toko. Buka toko untuk mulai menjual produk di BELMALT.
+        </p>
+
+        <button
+          class="checkout"
+          onclick="bukaToko()">
+
+          ➕ Buka Toko
+
+        </button>
+
+      </div>
+
+    `;
+
+    return;
+  }
+
+  // SUDAH PUNYA TOKO
   document.getElementById("halaman").innerHTML=`
 
-  <div class="judul">
-  🏪 Toko Saya
-  </div>
-
-  <div class="card">
-
-    <h3>Kelola Produk</h3>
-
-    <p style="font-size:13px;color:#777">
-    Tambahkan produk yang ingin kamu jual di BELMAL.
-    </p>
-
-    <button
-    class="checkout"
-    onclick="tambahProduk()">
-
-    ➕ Tambah Produk
-
-    </button>
-
-  </div>
-
-  <div class="card">
-
-    <h3>Produk Saya</h3>
-
-    <div id="produkSaya">
-    Memuat produk...
+    <div class="judul">
+      🏪 ${toko.name}
     </div>
 
-  </div>
+    <div class="card">
+
+      <h3>Kelola Produk</h3>
+
+      <p style="font-size:13px;color:#777">
+        Kelola produk yang kamu jual di BELMALT.
+      </p>
+
+      <button
+        class="checkout"
+        onclick="tambahProduk()">
+
+        ➕ Tambah Produk
+
+      </button>
+
+    </div>
+
+    <div class="card">
+
+      <h3>Produk Saya</h3>
+
+      <div id="produkSaya">
+        Memuat produk...
+      </div>
+
+    </div>
 
   `;
 
   muatProdukSaya();
 
-}
+  }
 
 function tambahProduk(){
 
