@@ -64,10 +64,87 @@ jobs:
                   targetSdk 35
                   versionCode 1
                   versionName '1.0'
-              }
+          }
           }
           EOF
 
           cat > android/app/src/main/res/values/styles.xml <<'EOF'
           <resources>
-              <style name="AppTheme" parent="android:style/Theme.Material.Light.NoActionBar
+              <style name="AppTheme" parent="android:style/Theme.Material.Light.NoActionBar">
+                  <item name="android:fontFamily">sans</item>
+                  <item name="android:colorAccent">#1261C9</item>
+                  <item name="android:statusBarColor">#1261C9</item>
+                  <item name="android:navigationBarColor">#FFFFFF</item>
+              </style>
+          </resources>
+          EOF
+
+          cat > android/app/src/main/AndroidManifest.xml <<'EOF'
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+              <uses-permission android:name="android.permission.INTERNET"/>
+
+              <application
+                  android:theme="@style/AppTheme"
+                  android:label="BELMALT">
+
+                  <activity
+                      android:name=".MainActivity"
+                      android:screenOrientation="portrait"
+                      android:exported="true">
+
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN"/>
+                          <category android:name="android.intent.category.LAUNCHER"/>
+                      </intent-filter>
+
+                  </activity>
+
+              </application>
+          </manifest>
+          EOF
+
+          cat > android/app/src/main/java/com/belmalt/app/MainActivity.java <<'EOF'
+          package com.belmalt.app;
+
+          import android.app.Activity;
+          import android.os.Bundle;
+          import android.webkit.WebSettings;
+          import android.webkit.WebView;
+          import android.webkit.WebViewClient;
+
+          public class MainActivity extends Activity {
+
+              @Override
+              protected void onCreate(Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+
+                  WebView webView = new WebView(this);
+                  webView.setWebViewClient(new WebViewClient());
+
+                  WebSettings settings = webView.getSettings();
+                  settings.setJavaScriptEnabled(true);
+                  settings.setDomStorageEnabled(true);
+
+                  webView.loadUrl("file:///android_asset/index.html");
+
+                  setContentView(webView);
+              }
+          }
+          EOF
+
+      - name: Pasang Gradle
+        working-directory: android
+        run: gradle wrapper --gradle-version 8.7
+
+      - name: Buat APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Simpan APK BELMALT
+        uses: actions/upload-artifact@v4
+        with:
+          name: BELMALT-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
