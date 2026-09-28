@@ -2300,21 +2300,23 @@ async function daftarAkun(){
 
   if(data.user){
 
-    const { error: profileError } =
-      await supabaseClient
-      .from("profiles")
-      .upsert({
-        id: data.user.id,
-        role: "buyer"
-      });
+    localStorage.setItem(
+      "penggunaBELMALT",
+      JSON.stringify({
+        nama: nama,
+        email: email,
+        id: data.user.id
+      })
+    );
 
-    if(profileError){
-      pesan("Akun dibuat, tetapi profil gagal disimpan.");
-      return;
+    if(data.session){
+      pesan("Akun berhasil dibuat dan kamu sudah masuk 🎉");
+      akun();
+    } else {
+      pesan("Akun berhasil dibuat 🎉 Silakan cek email untuk konfirmasi.");
     }
-  }
 
-  pesan("Akun berhasil dibuat 🎉");
+  }
 
   document.getElementById("loginPassword").value = "";
 
