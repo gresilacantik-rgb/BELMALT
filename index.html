@@ -749,46 +749,101 @@ behavior:"smooth"
 
 }
 
+async function renderBeranda(){
 
-function renderBeranda(){
+  document.getElementById("halaman").innerHTML=`
 
-document.getElementById("halaman").innerHTML=`
+  <div class="banner">
 
-<div class="banner">
+    <h2>Belanja Mudah di BELMALT 🛍️</h2>
 
-<h2>Belanja Mudah di BELMALT 🛍️</h2>
+    <p>
+    Temukan berbagai produk pilihan dari penjual
+    di Maluku Utara dengan mudah.
+    </p>
 
-<p>
-Temukan berbagai produk pilihan dari penjual
-di Maluku Utara dengan mudah.
-</p>
+  </div>
 
-</div>
+  <div class="judul">
+  Kategori
+  </div>
 
-<div class="judul">
-Kategori
-</div>
+  <div class="kategori">
 
-<div class="kategori">
+  ${buatKategoriHTML()}
 
-${buatKategoriHTML()}
+  </div>
 
-</div>
+  <div class="judul">
+  Produk Pilihan
+  </div>
 
-<div class="judul">
-Produk Pilihan
-</div>
+  <div
+  class="produk-grid"
+  id="produk">
 
-<div class="produk-grid" id="produk">
+    <p style="
+    grid-column:1/-1;
+    text-align:center;
+    color:#777">
 
-${buatProdukHTML(produkData)}
+    Memuat produk...
 
-</div>
+    </p>
 
-`;
+  </div>
+
+  `;
+
+  const { data, error } =
+    await supabaseClient
+    .from("products")
+    .select("*")
+    .eq("active", true)
+    .order("created_at", {
+      ascending: false
+    });
+
+  if(error){
+
+    console.error(error);
+
+    document.getElementById("produk").innerHTML =
+      buatProdukHTML(produkData);
+
+    return;
+  }
+
+  const produkSupabase = (data || []).map(produk => ({
+
+    id: produk.id,
+
+    nama: produk.name,
+
+    harga: Number(produk.price),
+
+    stok: produk.stock,
+
+    kategori: produk.category,
+
+    lokasi: produk.location || "",
+
+    deskripsi: produk.description || "",
+
+    gambar: produk.image_url || ""
+
+  }));
+
+  const semuaProduk = [
+    ...produkSupabase,
+    ...produkData
+  ];
+  
+window.semuaProdukBELMALT = semuaProduk;
+  document.getElementById("produk").innerHTML =
+    buatProdukHTML(semuaProduk);
 
 }
-
 
 /* =========================
    KATEGORI
@@ -911,126 +966,169 @@ behavior:"smooth"
 
 function buatProdukHTML(data){
 
-if(data.length===0){
+  if(data.length === 0){
 
-return `
+    return `
 
-<div class="card kosong"
-style="grid-column:1/-1">
+    <div class="card kosong"
+    style="grid-column:1/-1">
 
-<div class="icon">📦</div>
+      <div class="icon">📦</div>
 
-<p>Produk tidak ditemukan.</p>
+      <p>Produk tidak ditemukan.</p>
 
-</div>
+    </div>
 
-`;
+    `;
 
-}
+  }
 
-return data.map(function(item){
+  return data.map(function(item){
 
-return `
+    const gambar =
+      item.gambar ||
+      item.image_url ||
+      "";
 
-<div class="produk">
+    return `
 
-<div class="gambar">
-${item.icon}
-</div>
+    <div class="produk">
 
-<div class="info">
+      <div class="gambar">
 
-<div class="nama">
-${item.nama}
-</div>
+        ${
+          gambar
+          ? `
+          <img
+          src="${escapeHTML(gambar)}"
+          alt="${escapeHTML(item.nama)}"
+          style="
+          width:100%;
+          height:100%;
+          object-fit:cover;
+          border-radius:10px">
+          `
+          : `
+          ${item.icon || "📦"}
+          `
+        }
 
-<div class="harga">
-${rupiah(item.harga)}
-</div>
+      </div>
 
-<div class="lokasi">
-📍 ${item.lokasi}
-</div>
+      <div class="info">
 
-<div style="font-size:11px;color:#777;margin-top:4px">
-Stok: ${item.stok}
-</div>
+        <div class="nama">
+        ${escapeHTML(item.nama)}
+        </div>
 
-<button class="tombol"
-onclick="tambahKeranjang(${item.id})">
+        <div class="harga">
+        ${rupiah(item.harga)}
+        </div>
 
-+ Keranjang
+        <div class="lokasi">
+        📍 ${escapeHTML(item.lokasi || "-")}
+        </div>
 
-</button>
+        <div style="
+        font-size:11px;
+        color:#777;
+        margin-top:4px">
 
-</div>
+        Stok: ${item.stok ?? 0}
 
-</div>
+        </div>
 
-`;
+        <button
+        class="tombol"
+        onclick="tambahKeranjang(${item.id})">
 
-}).join("");
+        + Keranjang
+
+        </button>
+
+      </div>
+
+    </div>
+
+    `;
+
+  }).join("");
 
 }
 
 
 function tambahKeranjang(id){
 
-const produk=
-produkData.find(function(item){
+  const semuaProduk =
+    window.semuaProdukBELMALT || produkData;
 
-return item.id===id;
+  const produk =
+    semuaProduk.find(function(item){
 
-});
+      return Number(item.id) === Number(id);
 
-if(!produk) return;
+    });
 
-if(produk.stok<=0){
+  if(!produk) {
 
-pesan("Stok produk habis");
+    pesan("Produk tidak ditemukan");
 
-return;
+    return;
 
-}
+  }
 
-let item=
-keranjang.find(function(item){
+  if(produk.stok <= 0){
 
-return item.id===id;
+    pesan("Stok produk habis");
 
-});
+    return;
 
-if(item){
+  }
 
-if(item.jumlah>=produk.stok){
+  let item =
+    keranjang.find(function(item){
 
-pesan("Jumlah melebihi stok");
+      return Number(item.id) === Number(id);
 
-return;
+    });
 
-}
+  if(item){
 
-item.jumlah++;
+    if(item.jumlah >= produk.stok){
 
-}else{
+      pesan("Jumlah melebihi stok");
 
-keranjang.push({
+      return;
 
-id:produk.id,
-nama:produk.nama,
-harga:produk.harga,
-icon:produk.icon,
-jumlah:1
+    }
 
-});
+    item.jumlah++;
 
-}
+  }else{
 
-simpanKeranjang();
+    keranjang.push({
 
-pesan(
-produk.nama+" masuk keranjang 🛒"
-);
+      id: produk.id,
+
+      nama: produk.nama,
+
+      harga: produk.harga,
+
+      icon: produk.icon || "📦",
+
+      gambar: produk.gambar || "",
+
+      jumlah: 1
+
+    });
+
+  }
+
+  simpanKeranjang();
+
+  pesan(
+    produk.nama + " masuk keranjang 🛒"
+  );
 
 }
 
@@ -2051,81 +2149,420 @@ input.value="";
 
 function akun(){
 
-setNav("navAkun");
+  setNav("navAkun");
 
-if(!pengguna){
+  if(!pengguna){
 
-tampilkanLogin();
+    tampilkanLogin();
 
-return;
+    return;
+  }
+
+  document.getElementById("halaman").innerHTML=`
+
+  <div class="judul">
+  👤 Akun Saya
+  </div>
+
+  <div class="card"
+  style="text-align:center">
+
+    <div class="avatar">
+    👤
+    </div>
+
+    <h3>
+    ${escapeHTML(pengguna.nama)}
+    </h3>
+
+    <p style="font-size:13px;color:#777;margin-top:5px">
+    ${escapeHTML(pengguna.email)}
+    </p>
+
+  </div>
+
+  <div class="card">
+
+    <div class="menu-akun">
+
+      <span>📦 Pesanan Saya</span>
+
+      <button onclick="riwayatPesanan()">
+      Lihat →
+      </button>
+
+    </div>
+
+    <div class="menu-akun">
+
+      <span>🏪 Toko Saya</span>
+
+      <button onclick="tokoSaya()">
+      Buka →
+      </button>
+
+    </div>
+
+    <div class="menu-akun">
+
+      <span>🚪 Keluar</span>
+
+      <button
+      style="color:#d00"
+      onclick="logout()">
+
+      Keluar
+
+      </button>
+
+    </div>
+
+  </div>
+
+  `;
 
 }
 
-document.getElementById("halaman").innerHTML=`
+function tokoSaya(){
 
-<div class="judul">
-👤 Akun Saya
-</div>
+  document.getElementById("halaman").innerHTML=`
 
-<div class="card"
-style="text-align:center">
+  <div class="judul">
+  🏪 Toko Saya
+  </div>
 
-<div class="avatar">
-👤
-</div>
+  <div class="card">
 
-<h3>
-${escapeHTML(pengguna.nama)}
-</h3>
+    <h3>Kelola Produk</h3>
 
-<p style="font-size:13px;color:#777;margin-top:5px">
-${escapeHTML(pengguna.email)}
-</p>
+    <p style="font-size:13px;color:#777">
+    Tambahkan produk yang ingin kamu jual di BELMAL.
+    </p>
 
-</div>
+    <button
+    class="checkout"
+    onclick="tambahProduk()">
 
-<div class="card">
+    ➕ Tambah Produk
 
-<div class="menu-akun">
+    </button>
 
-<span>📦 Pesanan Saya</span>
+  </div>
 
-<button onclick="riwayatPesanan()">
-Lihat →
-</button>
+  <div class="card">
 
-</div>
+    <h3>Produk Saya</h3>
 
-<div class="menu-akun">
+    <div id="produkSaya">
+    Memuat produk...
+    </div>
 
-<span>🏪 Mode Penjual</span>
+  </div>
 
-<button onclick="pesan('Fitur penjual akan dihubungkan ke Supabase')">
-Buka →
-</button>
+  `;
 
-</div>
-
-<div class="menu-akun">
-
-<span>🚪 Keluar</span>
-
-<button
-style="color:#d00"
-onclick="logout()">
-
-Keluar
-
-</button>
-
-</div>
-
-</div>
-
-`;
+  muatProdukSaya();
 
 }
 
+function tambahProduk(){
+
+  document.getElementById("halaman").innerHTML=`
+
+  <div class="judul">
+  ➕ Tambah Produk
+  </div>
+
+  <div class="card">
+
+    <div class="form-group">
+      <label>Nama Produk</label>
+      <input
+        id="produkNama"
+        type="text"
+        placeholder="Contoh: Kaos Maluku">
+    </div>
+
+    <div class="form-group">
+      <label>Harga</label>
+      <input
+        id="produkHarga"
+        type="number"
+        placeholder="Contoh: 75000">
+    </div>
+
+    <div class="form-group">
+      <label>Stok</label>
+      <input
+        id="produkStok"
+        type="number"
+        placeholder="Contoh: 10">
+    </div>
+
+    <div class="form-group">
+      <label>Kategori</label>
+      <select id="produkKategori">
+        <option value="">Pilih kategori</option>
+        <option>Fashion</option>
+        <option>Kecantikan</option>
+        <option>Makanan</option>
+        <option>Elektronik</option>
+        <option>Rumah</option>
+        <option>Lainnya</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Lokasi</label>
+      <input
+        id="produkLokasi"
+        type="text"
+        placeholder="Contoh: Ternate">
+    </div>
+
+    <div class="form-group">
+      <label>Deskripsi</label>
+      <textarea
+        id="produkDeskripsi"
+        placeholder="Jelaskan produk kamu"></textarea>
+    </div>
+
+    <div class="form-group">
+      <label>Link Foto Produk</label>
+      <input
+        id="produkGambar"
+        type="url"
+        placeholder="https://...">
+    </div>
+
+    <button
+      class="checkout"
+      onclick="simpanProduk()">
+
+      💾 Simpan Produk
+
+    </button>
+
+    <button
+      onclick="tokoSaya()"
+      style="
+      width:100%;
+      margin-top:10px;
+      padding:12px;
+      border:1px solid #ddd;
+      border-radius:8px;
+      background:white">
+
+      ← Kembali
+
+    </button>
+
+  </div>
+
+  `;
+
+}
+
+async function simpanProduk(){
+
+  if(!pengguna || !pengguna.id){
+    pesan("Silakan login terlebih dahulu");
+    return;
+  }
+
+  const nama =
+    document.getElementById("produkNama")
+    .value.trim();
+
+  const harga =
+    Number(document.getElementById("produkHarga").value);
+
+  const stok =
+    Number(document.getElementById("produkStok").value);
+
+  const kategori =
+    document.getElementById("produkKategori").value;
+
+  const lokasi =
+    document.getElementById("produkLokasi")
+    .value.trim();
+
+  const deskripsi =
+    document.getElementById("produkDeskripsi")
+    .value.trim();
+
+  const gambar =
+    document.getElementById("produkGambar")
+    .value.trim();
+
+  if(!nama){
+    pesan("Nama produk wajib diisi");
+    return;
+  }
+
+  if(!harga || harga < 1){
+    pesan("Masukkan harga yang benar");
+    return;
+  }
+
+  if(stok < 0){
+    pesan("Stok tidak boleh negatif");
+    return;
+  }
+
+  if(!kategori){
+    pesan("Pilih kategori produk");
+    return;
+  }
+
+  const { data, error } =
+    await supabaseClient
+    .from("products")
+    .insert({
+      name: nama,
+      price: harga,
+      stock: stok,
+      category: kategori,
+      location: lokasi,
+      description: deskripsi,
+      image_url: gambar || null,
+      active: true,
+      seller_id: pengguna.id
+    })
+    .select()
+    .single();
+
+  if(error){
+
+    console.error(error);
+
+    pesan("Produk gagal disimpan: " + error.message);
+
+    return;
+  }
+
+  pesan("Produk berhasil ditambahkan 🎉");
+
+  tokoSaya();
+
+}
+
+async function muatProdukSaya(){
+
+  const wadah =
+    document.getElementById("produkSaya");
+
+  if(!wadah){
+    return;
+  }
+
+  if(!pengguna || !pengguna.id){
+    wadah.innerHTML =
+      "<p>Silakan login terlebih dahulu.</p>";
+    return;
+  }
+
+  const { data, error } =
+    await supabaseClient
+    .from("products")
+    .select("*")
+    .eq("seller_id", pengguna.id)
+    .order("created_at", {
+      ascending: false
+    });
+
+  if(error){
+
+    console.error(error);
+
+    wadah.innerHTML =
+      "<p>Gagal memuat produk.</p>";
+
+    return;
+  }
+
+  if(!data || data.length === 0){
+
+    wadah.innerHTML = `
+      <p style="
+      text-align:center;
+      color:#777;
+      font-size:13px">
+
+      Kamu belum mempunyai produk.
+
+      </p>
+    `;
+
+    return;
+  }
+
+  wadah.innerHTML = data.map(produk => `
+
+    <div class="card"
+    style="margin-top:10px">
+
+      ${
+        produk.image_url
+        ? `
+        <img
+        src="${escapeHTML(produk.image_url)}"
+        style="
+        width:100%;
+        height:160px;
+        object-fit:cover;
+        border-radius:10px">
+        `
+        : `
+        <div style="
+        height:160px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        background:#f5f5f5;
+        border-radius:10px;
+        font-size:50px">
+
+        📦
+
+        </div>
+        `
+      }
+
+      <h3>
+      ${escapeHTML(produk.name)}
+      </h3>
+
+      <p style="
+      color:#e53935;
+      font-weight:bold">
+
+      Rp ${Number(produk.price)
+        .toLocaleString("id-ID")}
+
+      </p>
+
+      <p style="
+      font-size:13px;
+      color:#777">
+
+      Stok: ${produk.stock}
+
+      </p>
+
+      <p style="
+      font-size:13px;
+      color:#777">
+
+      📍 ${escapeHTML(produk.location || "-")}
+
+      </p>
+
+    </div>
+
+  `).join("");
+
+}
 
 function tampilkanLogin(){
 
