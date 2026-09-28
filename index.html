@@ -186,6 +186,7 @@ header{
   font-size:10px;
   cursor:pointer;
   min-width:50px;
+  position:relative;
 }
 
 .nav span{
@@ -197,6 +198,21 @@ header{
 .nav.active{
   color:#1261c9;
   font-weight:bold;
+}
+
+.badge{
+  position:absolute;
+  top:-4px;
+  right:6px;
+  background:red;
+  color:white;
+  font-size:10px;
+  min-width:17px;
+  height:17px;
+  border-radius:50%;
+  display:none;
+  align-items:center;
+  justify-content:center;
 }
 
 #pesan{
@@ -212,6 +228,114 @@ header{
   display:none;
   z-index:30;
 }
+
+.keranjang-box{
+  background:white;
+  border-radius:16px;
+  padding:15px;
+  margin-bottom:15px;
+  box-shadow:0 2px 9px rgba(0,0,0,.07);
+}
+
+.item-keranjang{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:12px 0;
+  border-bottom:1px solid #eee;
+}
+
+.item-icon{
+  width:55px;
+  height:55px;
+  border-radius:12px;
+  background:#eaf0f8;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:28px;
+}
+
+.item-detail{
+  flex:1;
+}
+
+.item-nama{
+  font-weight:bold;
+  font-size:14px;
+}
+
+.item-harga{
+  color:#1261c9;
+  font-size:13px;
+  margin-top:4px;
+}
+
+.jumlah{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-top:8px;
+}
+
+.jumlah button{
+  width:28px;
+  height:28px;
+  border:0;
+  border-radius:7px;
+  background:#1261c9;
+  color:white;
+  font-size:17px;
+}
+
+.jumlah span{
+  min-width:20px;
+  text-align:center;
+  font-weight:bold;
+}
+
+.hapus{
+  border:0;
+  background:#ffe5e5;
+  color:#d00;
+  padding:7px;
+  border-radius:7px;
+  font-size:11px;
+}
+
+.total-box{
+  background:white;
+  border-radius:16px;
+  padding:18px;
+  margin-top:15px;
+  box-shadow:0 2px 9px rgba(0,0,0,.07);
+}
+
+.total-row{
+  display:flex;
+  justify-content:space-between;
+  font-size:17px;
+  font-weight:bold;
+}
+
+.checkout{
+  width:100%;
+  border:0;
+  background:#1261c9;
+  color:white;
+  padding:13px;
+  border-radius:11px;
+  margin-top:15px;
+  font-weight:bold;
+  font-size:15px;
+}
+
+.kosong{
+  text-align:center;
+  padding:50px 15px;
+  color:#777;
+}
+
 </style>
 </head>
 
@@ -238,7 +362,7 @@ oninput="cariProduk()">
 
 </header>
 
-<main class="container">
+<main class="container" id="halaman">
 
 <div class="banner">
 <h2>Belanja Mudah di BELMALT 🛍️</h2>
@@ -253,32 +377,27 @@ Kategori
 
 <div class="kategori">
 
-<div class="kategori-item"
-onclick="pesan('Fashion')">
+<div class="kategori-item" onclick="pesan('Fashion')">
 <div class="kategori-icon">👕</div>
 <p>Fashion</p>
 </div>
 
-<div class="kategori-item"
-onclick="pesan('Kecantikan')">
+<div class="kategori-item" onclick="pesan('Kecantikan')">
 <div class="kategori-icon">💄</div>
 <p>Kecantikan</p>
 </div>
 
-<div class="kategori-item"
-onclick="pesan('Elektronik')">
+<div class="kategori-item" onclick="pesan('Elektronik')">
 <div class="kategori-icon">📱</div>
 <p>Elektronik</p>
 </div>
 
-<div class="kategori-item"
-onclick="pesan('Makanan')">
+<div class="kategori-item" onclick="pesan('Makanan')">
 <div class="kategori-icon">🍜</div>
 <p>Makanan</p>
 </div>
 
-<div class="kategori-item"
-onclick="pesan('Rumah')">
+<div class="kategori-item" onclick="pesan('Rumah')">
 <div class="kategori-icon">🏠</div>
 <p>Rumah</p>
 </div>
@@ -291,114 +410,51 @@ Produk Pilihan
 
 <div class="produk-grid" id="produk">
 
-<div class="produk"
-data-nama="Kaos Maluku">
-
+<div class="produk" data-nama="Kaos Maluku">
 <div class="gambar">👕</div>
-
 <div class="info">
-
-<div class="nama">
-Kaos Maluku
-</div>
-
-<div class="harga">
-Rp75.000
-</div>
-
-<div class="lokasi">
-📍 Ternate
-</div>
-
-<button class="tombol"
-onclick="tambahKeranjang('Kaos Maluku')">
+<div class="nama">Kaos Maluku</div>
+<div class="harga">Rp75.000</div>
+<div class="lokasi">📍 Ternate</div>
+<button class="tombol" onclick="tambahKeranjang('Kaos Maluku',75000,'👕')">
 + Keranjang
 </button>
-
 </div>
 </div>
 
-
-<div class="produk"
-data-nama="Tas Wanita">
-
+<div class="produk" data-nama="Tas Wanita">
 <div class="gambar">👜</div>
-
 <div class="info">
-
-<div class="nama">
-Tas Wanita
-</div>
-
-<div class="harga">
-Rp120.000
-</div>
-
-<div class="lokasi">
-📍 Tidore
-</div>
-
-<button class="tombol"
-onclick="tambahKeranjang('Tas Wanita')">
+<div class="nama">Tas Wanita</div>
+<div class="harga">Rp120.000</div>
+<div class="lokasi">📍 Tidore</div>
+<button class="tombol" onclick="tambahKeranjang('Tas Wanita',120000,'👜')">
 + Keranjang
 </button>
-
 </div>
 </div>
 
-
-<div class="produk"
-data-nama="Skincare">
-
+<div class="produk" data-nama="Skincare">
 <div class="gambar">💄</div>
-
 <div class="info">
-
-<div class="nama">
-Skincare
-</div>
-
-<div class="harga">
-Rp85.000
-</div>
-
-<div class="lokasi">
-📍 Ternate
-</div>
-
-<button class="tombol"
-onclick="tambahKeranjang('Skincare')">
+<div class="nama">Skincare</div>
+<div class="harga">Rp85.000</div>
+<div class="lokasi">📍 Ternate</div>
+<button class="tombol" onclick="tambahKeranjang('Skincare',85000,'💄')">
 + Keranjang
 </button>
-
 </div>
 </div>
 
-
-<div class="produk"
-data-nama="Produk Lokal">
-
+<div class="produk" data-nama="Produk Lokal">
 <div class="gambar">🍯</div>
-
 <div class="info">
-
-<div class="nama">
-Produk Lokal
-</div>
-
-<div class="harga">
-Rp50.000
-</div>
-
-<div class="lokasi">
-📍 Maluku Utara
-</div>
-
-<button class="tombol"
-onclick="tambahKeranjang('Produk Lokal')">
+<div class="nama">Produk Lokal</div>
+<div class="harga">Rp50.000</div>
+<div class="lokasi">📍 Maluku Utara</div>
+<button class="tombol" onclick="tambahKeranjang('Produk Lokal',50000,'🍯')">
 + Keranjang
 </button>
-
 </div>
 </div>
 
@@ -406,45 +462,51 @@ onclick="tambahKeranjang('Produk Lokal')">
 
 </main>
 
-
 <div class="bottom">
 
-<div class="nav active"
-onclick="beranda()">
+<div class="nav active" onclick="beranda()">
 <span>🏠</span>
 Beranda
 </div>
 
-<div class="nav"
-onclick="kategori()">
+<div class="nav" onclick="kategori()">
 <span>🛍️</span>
 Kategori
 </div>
 
-<div class="nav"
-onclick="lihatKeranjang()">
+<div class="nav" onclick="lihatKeranjang()">
 <span>🛒</span>
+<div class="badge" id="badge">0</div>
 Keranjang
 </div>
 
-<div class="nav"
-onclick="chat()">
+<div class="nav" onclick="chat()">
 <span>💬</span>
 Chat
 </div>
 
-<div class="nav"
-onclick="akun()">
+<div class="nav" onclick="akun()">
 <span>👤</span>
 Akun
 </div>
 
 </div>
 
-
 <script>
 
-let keranjang=[];
+let keranjang =
+JSON.parse(localStorage.getItem("keranjangBELMALT")) || [];
+
+
+function simpanKeranjang(){
+
+localStorage.setItem(
+"keranjangBELMALT",
+JSON.stringify(keranjang)
+);
+
+}
+
 
 function pesan(teks){
 
@@ -463,32 +525,279 @@ box.style.display="none";
 }
 
 
-function tambahKeranjang(nama){
+function tambahKeranjang(nama,harga,icon){
 
-keranjang.push(nama);
+let item=keranjang.find(
+produk=>produk.nama===nama
+);
+
+if(item){
+
+item.jumlah++;
+
+}else{
+
+keranjang.push({
+nama:nama,
+harga:harga,
+icon:icon,
+jumlah:1
+});
+
+}
+
+simpanKeranjang();
+
+updateBadge();
 
 pesan(
-nama+" berhasil masuk keranjang 🛒"
+nama+" masuk keranjang 🛒"
 );
+
+}
+
+
+function updateBadge(){
+
+let jumlah=keranjang.reduce(
+(total,item)=>total+item.jumlah,
+0
+);
+
+let badge=document.getElementById("badge");
+
+if(jumlah>0){
+
+badge.innerText=jumlah;
+badge.style.display="flex";
+
+}else{
+
+badge.style.display="none";
+
+}
+
+}
+
+
+function rupiah(angka){
+
+return "Rp"+
+angka.toLocaleString("id-ID");
 
 }
 
 
 function lihatKeranjang(){
 
+document.getElementById("halaman").innerHTML=`
+
+<div class="judul">🛒 Keranjang Belanja</div>
+
+<div id="isiKeranjang"></div>
+
+`;
+
+tampilkanKeranjang();
+
+window.scrollTo({
+top:0,
+behavior:"smooth"
+});
+
+}
+
+
+function tampilkanKeranjang(){
+
+let box=
+document.getElementById("isiKeranjang");
+
+if(keranjang.length===0){
+
+box.innerHTML=`
+
+<div class="keranjang-box kosong">
+
+<div style="font-size:55px">🛒</div>
+
+<p>Keranjang masih kosong</p>
+
+<p style="font-size:12px;margin-top:8px">
+Yuk pilih produk favoritmu!
+</p>
+
+</div>
+
+`;
+
+return;
+
+}
+
+
+let html="";
+
+let total=0;
+
+keranjang.forEach(function(item,index){
+
+let subtotal=item.harga*item.jumlah;
+
+total+=subtotal;
+
+html+=`
+
+<div class="keranjang-box">
+
+<div class="item-keranjang">
+
+<div class="item-icon">
+${item.icon}
+</div>
+
+<div class="item-detail">
+
+<div class="item-nama">
+${item.nama}
+</div>
+
+<div class="item-harga">
+${rupiah(item.harga)}
+</div>
+
+<div class="jumlah">
+
+<button onclick="kurangi(${index})">
+−
+</button>
+
+<span>
+${item.jumlah}
+</span>
+
+<button onclick="tambahJumlah(${index})">
++
+</button>
+
+</div>
+
+</div>
+
+<button class="hapus"
+onclick="hapusItem(${index})">
+🗑️ Hapus
+</button>
+
+</div>
+
+<div style="text-align:right;font-weight:bold;margin-top:10px">
+Subtotal: ${rupiah(subtotal)}
+</div>
+
+</div>
+
+`;
+
+});
+
+
+html+=`
+
+<div class="total-box">
+
+<div class="total-row">
+
+<span>Total</span>
+
+<span style="color:#1261c9">
+${rupiah(total)}
+</span>
+
+</div>
+
+<button class="checkout"
+onclick="checkout()">
+
+Lanjut ke Checkout
+
+</button>
+
+</div>
+
+`;
+
+box.innerHTML=html;
+
+}
+
+
+function tambahJumlah(index){
+
+keranjang[index].jumlah++;
+
+simpanKeranjang();
+
+updateBadge();
+
+tampilkanKeranjang();
+
+}
+
+
+function kurangi(index){
+
+if(keranjang[index].jumlah>1){
+
+keranjang[index].jumlah--;
+
+}else{
+
+keranjang.splice(index,1);
+
+}
+
+simpanKeranjang();
+
+updateBadge();
+
+tampilkanKeranjang();
+
+}
+
+
+function hapusItem(index){
+
+let nama=keranjang[index].nama;
+
+keranjang.splice(index,1);
+
+simpanKeranjang();
+
+updateBadge();
+
+tampilkanKeranjang();
+
+pesan(
+nama+" dihapus dari keranjang"
+);
+
+}
+
+
+function checkout(){
+
 if(keranjang.length===0){
 
 pesan("Keranjang masih kosong 🛒");
 
-}else{
-
-pesan(
-"Keranjang berisi "+
-keranjang.length+
-" produk"
-);
+return;
 
 }
+
+pesan(
+"Checkout akan segera tersedia 📦"
+);
 
 }
 
@@ -496,22 +805,17 @@ keranjang.length+
 function cariProduk(){
 
 let kata=
-document
-.getElementById("cari")
+document.getElementById("cari")
 .value
 .toLowerCase();
 
 let produk=
-document
-.querySelectorAll(".produk");
+document.querySelectorAll(".produk");
 
 produk.forEach(function(item){
 
 let nama=
-item
-.dataset
-.nama
-.toLowerCase();
+item.dataset.nama.toLowerCase();
 
 if(nama.includes(kata)){
 
@@ -530,15 +834,7 @@ item.style.display="none";
 
 function beranda(){
 
-window.scrollTo({
-
-top:0,
-
-behavior:"smooth"
-
-});
-
-pesan("Beranda");
+location.reload();
 
 }
 
@@ -548,9 +844,7 @@ function kategori(){
 document
 .querySelector(".judul")
 .scrollIntoView({
-
 behavior:"smooth"
-
 });
 
 pesan("Kategori");
@@ -574,6 +868,9 @@ pesan(
 );
 
 }
+
+
+updateBadge();
 
 </script>
 
