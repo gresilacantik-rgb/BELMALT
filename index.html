@@ -2316,6 +2316,87 @@ async function tokoSaya(){
 
   }
 
+ function bukaToko(){
+
+  if(!pengguna || !pengguna.id){
+    pesan("Silakan login terlebih dahulu");
+    return;
+  }
+
+  document.getElementById("halaman").innerHTML=`
+
+    <div class="judul">
+      🏪 Buka Toko
+    </div>
+
+    <div class="card">
+
+      <div class="form-group">
+        <label>Nama Toko</label>
+        <input
+          id="tokoNama"
+          type="text"
+          placeholder="Contoh: Toko Gresila">
+      </div>
+
+      <div class="form-group">
+        <label>Lokasi</label>
+        <input
+          id="tokoLokasi"
+          type="text"
+          placeholder="Contoh: Ternate">
+      </div>
+
+      <div class="form-group">
+        <label>Nomor HP</label>
+        <input
+          id="tokoPhone"
+          type="tel"
+          placeholder="Contoh: 081234567890">
+      </div>
+
+      <div class="form-group">
+        <label>Deskripsi Toko</label>
+        <textarea
+          id="tokoDeskripsi"
+          placeholder="Ceritakan tentang toko kamu"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Link Logo Toko</label>
+        <input
+          id="tokoLogo"
+          type="url"
+          placeholder="https://...">
+      </div>
+
+      <button
+        class="checkout"
+        onclick="simpanToko()">
+
+        💾 Buka Toko
+
+      </button>
+
+      <button
+        onclick="tokoSaya()"
+        style="
+        width:100%;
+        margin-top:10px;
+        padding:12px;
+        border:1px solid #ddd;
+        border-radius:8px;
+        background:white">
+
+        ← Kembali
+
+      </button>
+
+    </div>
+
+  `;
+}
+  
 function tambahProduk(){
 
   document.getElementById("halaman").innerHTML=`
