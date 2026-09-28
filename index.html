@@ -6,35 +6,212 @@
 <title>BELMALT - Belanja Maluku Terlengkap</title>
 
 <style>
-*{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif}
-body{background:#f5f7fb;color:#222;padding-bottom:75px}
-header{background:#1261c9;color:white;padding:20px 16px;border-radius:0 0 22px 22px}
-.logo{font-size:28px;font-weight:bold}
-.slogan{font-size:13px;margin-top:4px}
-.search{margin-top:16px;background:white;color:#777;padding:13px;border-radius:12px}
-.search input{border:0;outline:0;width:85%;font-size:14px}
-.container{padding:18px 16px}
-.judul{font-size:19px;font-weight:bold;margin:20px 0 13px}
-.banner{background:#1261c9;color:white;border-radius:16px;padding:20px;margin-bottom:20px}
-.banner h2{font-size:20px;margin-bottom:7px}
-.banner p{font-size:13px}
-.kategori{display:flex;gap:12px;overflow-x:auto}
-.kategori-item{min-width:78px;background:white;border-radius:14px;padding:13px 7px;text-align:center;box-shadow:0 2px 8px #ddd;cursor:pointer}
-.kategori-icon{font-size:27px;margin-bottom:5px}
-.kategori-item p{font-size:11px}
-.produk-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
-.produk{background:white;border-radius:15px;overflow:hidden;box-shadow:0 2px 8px #ddd;cursor:pointer}
-.gambar{height:135px;background:#eaf0f8;display:flex;align-items:center;justify-content:center;font-size:52px}
-.info{padding:12px}
-.nama{font-size:14px;font-weight:bold;margin-bottom:7px}
-.harga{color:#1261c9;font-weight:bold}
-.lokasi{font-size:11px;color:#777;margin-top:5px}
-.tombol{margin-top:9px;width:100%;border:0;background:#1261c9;color:white;padding:9px;border-radius:9px;cursor:pointer}
-.bottom{position:fixed;bottom:0;left:0;right:0;height:68px;background:white;display:flex;justify-content:space-around;align-items:center;box-shadow:0 -2px 10px #ddd;z-index:10}
-.nav{text-align:center;color:#777;font-size:11px;cursor:pointer}
-.nav span{display:block;font-size:22px;margin-bottom:3px}
-.nav.active{color:#1261c9;font-weight:bold}
-#pesan{position:fixed;top:20px;left:15px;right:15px;background:#222;color:white;padding:13px;border-radius:10px;text-align:center;display:none;z-index:20}
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+  font-family:Arial,sans-serif;
+}
+
+body{
+  background:#f5f7fb;
+  color:#222;
+  padding-bottom:100px;
+}
+
+header{
+  background:#1261c9;
+  color:white;
+  padding:20px 16px 22px;
+  border-radius:0 0 24px 24px;
+}
+
+.logo{
+  font-size:29px;
+  font-weight:bold;
+}
+
+.slogan{
+  font-size:13px;
+  margin-top:4px;
+  opacity:.9;
+}
+
+.search{
+  margin-top:17px;
+  background:white;
+  color:#777;
+  padding:13px 14px;
+  border-radius:13px;
+}
+
+.search input{
+  border:0;
+  outline:0;
+  width:88%;
+  font-size:14px;
+}
+
+.container{
+  padding:18px 16px;
+}
+
+.banner{
+  background:linear-gradient(135deg,#1261c9,#2584ef);
+  color:white;
+  border-radius:18px;
+  padding:21px;
+  margin-bottom:22px;
+}
+
+.banner h2{
+  font-size:20px;
+  margin-bottom:7px;
+}
+
+.banner p{
+  font-size:13px;
+  line-height:1.5;
+}
+
+.judul{
+  font-size:19px;
+  font-weight:bold;
+  margin:20px 0 13px;
+}
+
+.kategori{
+  display:flex;
+  gap:12px;
+  overflow-x:auto;
+  padding:3px 2px 8px;
+}
+
+.kategori::-webkit-scrollbar{
+  display:none;
+}
+
+.kategori-item{
+  min-width:78px;
+  background:white;
+  border-radius:15px;
+  padding:13px 7px;
+  text-align:center;
+  box-shadow:0 2px 8px rgba(0,0,0,.07);
+  cursor:pointer;
+}
+
+.kategori-icon{
+  font-size:27px;
+  margin-bottom:5px;
+}
+
+.kategori-item p{
+  font-size:11px;
+}
+
+.produk-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:14px;
+}
+
+.produk{
+  background:white;
+  border-radius:16px;
+  overflow:hidden;
+  box-shadow:0 2px 9px rgba(0,0,0,.07);
+}
+
+.gambar{
+  height:140px;
+  background:#eaf0f8;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:52px;
+}
+
+.info{
+  padding:12px;
+}
+
+.nama{
+  font-size:14px;
+  font-weight:bold;
+  margin-bottom:7px;
+}
+
+.harga{
+  color:#1261c9;
+  font-weight:bold;
+  font-size:15px;
+}
+
+.lokasi{
+  font-size:11px;
+  color:#777;
+  margin-top:5px;
+}
+
+.tombol{
+  margin-top:10px;
+  width:100%;
+  border:0;
+  background:#1261c9;
+  color:white;
+  padding:9px;
+  border-radius:9px;
+  cursor:pointer;
+}
+
+.bottom{
+  position:fixed;
+  bottom:12px;
+  left:10px;
+  right:10px;
+  height:68px;
+  background:white;
+  display:flex;
+  justify-content:space-around;
+  align-items:center;
+  border-radius:18px;
+  box-shadow:0 3px 15px rgba(0,0,0,.18);
+  z-index:10;
+}
+
+.nav{
+  text-align:center;
+  color:#777;
+  font-size:10px;
+  cursor:pointer;
+  min-width:50px;
+}
+
+.nav span{
+  display:block;
+  font-size:22px;
+  margin-bottom:3px;
+}
+
+.nav.active{
+  color:#1261c9;
+  font-weight:bold;
+}
+
+#pesan{
+  position:fixed;
+  top:20px;
+  left:15px;
+  right:15px;
+  background:#222;
+  color:white;
+  padding:13px;
+  border-radius:10px;
+  text-align:center;
+  display:none;
+  z-index:30;
+}
 </style>
 </head>
 
@@ -43,13 +220,362 @@ header{background:#1261c9;color:white;padding:20px 16px;border-radius:0 0 22px 2
 <div id="pesan"></div>
 
 <header>
+
 <div class="logo">BELMALT</div>
-<div class="slogan">Belanja Maluku Terlengkap</div>
+
+<div class="slogan">
+Belanja Maluku Terlengkap
+</div>
 
 <div class="search">
 🔍
-<input id="cari" type="text" placeholder="Cari produk di BELMALT..." oninput="cariProduk()">
+<input
+id="cari"
+type="text"
+placeholder="Cari produk di BELMALT..."
+oninput="cariProduk()">
 </div>
+
 </header>
 
-<main
+<main class="container">
+
+<div class="banner">
+<h2>Belanja Mudah di BELMALT 🛍️</h2>
+<p>
+Temukan berbagai produk pilihan dari penjual di Maluku Utara.
+</p>
+</div>
+
+<div class="judul">
+Kategori
+</div>
+
+<div class="kategori">
+
+<div class="kategori-item"
+onclick="pesan('Fashion')">
+<div class="kategori-icon">👕</div>
+<p>Fashion</p>
+</div>
+
+<div class="kategori-item"
+onclick="pesan('Kecantikan')">
+<div class="kategori-icon">💄</div>
+<p>Kecantikan</p>
+</div>
+
+<div class="kategori-item"
+onclick="pesan('Elektronik')">
+<div class="kategori-icon">📱</div>
+<p>Elektronik</p>
+</div>
+
+<div class="kategori-item"
+onclick="pesan('Makanan')">
+<div class="kategori-icon">🍜</div>
+<p>Makanan</p>
+</div>
+
+<div class="kategori-item"
+onclick="pesan('Rumah')">
+<div class="kategori-icon">🏠</div>
+<p>Rumah</p>
+</div>
+
+</div>
+
+<div class="judul">
+Produk Pilihan
+</div>
+
+<div class="produk-grid" id="produk">
+
+<div class="produk"
+data-nama="Kaos Maluku">
+
+<div class="gambar">👕</div>
+
+<div class="info">
+
+<div class="nama">
+Kaos Maluku
+</div>
+
+<div class="harga">
+Rp75.000
+</div>
+
+<div class="lokasi">
+📍 Ternate
+</div>
+
+<button class="tombol"
+onclick="tambahKeranjang('Kaos Maluku')">
++ Keranjang
+</button>
+
+</div>
+</div>
+
+
+<div class="produk"
+data-nama="Tas Wanita">
+
+<div class="gambar">👜</div>
+
+<div class="info">
+
+<div class="nama">
+Tas Wanita
+</div>
+
+<div class="harga">
+Rp120.000
+</div>
+
+<div class="lokasi">
+📍 Tidore
+</div>
+
+<button class="tombol"
+onclick="tambahKeranjang('Tas Wanita')">
++ Keranjang
+</button>
+
+</div>
+</div>
+
+
+<div class="produk"
+data-nama="Skincare">
+
+<div class="gambar">💄</div>
+
+<div class="info">
+
+<div class="nama">
+Skincare
+</div>
+
+<div class="harga">
+Rp85.000
+</div>
+
+<div class="lokasi">
+📍 Ternate
+</div>
+
+<button class="tombol"
+onclick="tambahKeranjang('Skincare')">
++ Keranjang
+</button>
+
+</div>
+</div>
+
+
+<div class="produk"
+data-nama="Produk Lokal">
+
+<div class="gambar">🍯</div>
+
+<div class="info">
+
+<div class="nama">
+Produk Lokal
+</div>
+
+<div class="harga">
+Rp50.000
+</div>
+
+<div class="lokasi">
+📍 Maluku Utara
+</div>
+
+<button class="tombol"
+onclick="tambahKeranjang('Produk Lokal')">
++ Keranjang
+</button>
+
+</div>
+</div>
+
+</div>
+
+</main>
+
+
+<div class="bottom">
+
+<div class="nav active"
+onclick="beranda()">
+<span>🏠</span>
+Beranda
+</div>
+
+<div class="nav"
+onclick="kategori()">
+<span>🛍️</span>
+Kategori
+</div>
+
+<div class="nav"
+onclick="lihatKeranjang()">
+<span>🛒</span>
+Keranjang
+</div>
+
+<div class="nav"
+onclick="chat()">
+<span>💬</span>
+Chat
+</div>
+
+<div class="nav"
+onclick="akun()">
+<span>👤</span>
+Akun
+</div>
+
+</div>
+
+
+<script>
+
+let keranjang=[];
+
+function pesan(teks){
+
+let box=document.getElementById("pesan");
+
+box.innerText=teks;
+
+box.style.display="block";
+
+setTimeout(function(){
+
+box.style.display="none";
+
+},1800);
+
+}
+
+
+function tambahKeranjang(nama){
+
+keranjang.push(nama);
+
+pesan(
+nama+" berhasil masuk keranjang 🛒"
+);
+
+}
+
+
+function lihatKeranjang(){
+
+if(keranjang.length===0){
+
+pesan("Keranjang masih kosong 🛒");
+
+}else{
+
+pesan(
+"Keranjang berisi "+
+keranjang.length+
+" produk"
+);
+
+}
+
+}
+
+
+function cariProduk(){
+
+let kata=
+document
+.getElementById("cari")
+.value
+.toLowerCase();
+
+let produk=
+document
+.querySelectorAll(".produk");
+
+produk.forEach(function(item){
+
+let nama=
+item
+.dataset
+.nama
+.toLowerCase();
+
+if(nama.includes(kata)){
+
+item.style.display="block";
+
+}else{
+
+item.style.display="none";
+
+}
+
+});
+
+}
+
+
+function beranda(){
+
+window.scrollTo({
+
+top:0,
+
+behavior:"smooth"
+
+});
+
+pesan("Beranda");
+
+}
+
+
+function kategori(){
+
+document
+.querySelector(".judul")
+.scrollIntoView({
+
+behavior:"smooth"
+
+});
+
+pesan("Kategori");
+
+}
+
+
+function chat(){
+
+pesan(
+"Fitur Chat BELMALT segera hadir 💬"
+);
+
+}
+
+
+function akun(){
+
+pesan(
+"Halaman Akun BELMALT"
+);
+
+}
+
+</script>
+
+</body>
+</html>
