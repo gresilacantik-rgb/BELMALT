@@ -2705,6 +2705,84 @@ async function tokoSaya(){
 
   `;
 }
+
+async function simpanToko(){
+
+  if(!pengguna || !pengguna.id){
+    pesan("Silakan login terlebih dahulu");
+    return;
+  }
+
+  const nama =
+    document.getElementById("tokoNama").value.trim();
+
+  const lokasi =
+    document.getElementById("tokoLokasi").value.trim();
+
+  const phone =
+    document.getElementById("tokoPhone").value.trim();
+
+  const deskripsi =
+    document.getElementById("tokoDeskripsi").value.trim();
+
+  const logo =
+    document.getElementById("tokoLogo").value.trim();
+
+  if(!nama){
+    pesan("Nama toko wajib diisi");
+    return;
+  }
+
+  // Cek apakah pengguna sudah memiliki toko
+  const { data: tokoLama, error: cekError } =
+    await supabaseClient
+      .from("shops")
+      .select("id")
+      .eq("owner_id", pengguna.id)
+      .maybeSingle();
+
+  if(cekError){
+    console.error(cekError);
+    pesan("Gagal memeriksa toko: " + cekError.message);
+    return;
+  }
+
+  if(tokoLama){
+    pesan("Kamu sudah memiliki toko");
+    tokoSaya();
+    return;
+  }
+
+  // Simpan toko
+  const { data: tokoBaru, error } =
+    await supabaseClient
+      .from("shops")
+      .insert({
+        owner_id: pengguna.id,
+        name: nama,
+        location: lokasi,
+        phone: phone,
+        description: deskripsi,
+        logo_url: logo || null
+      })
+      .select()
+      .single();
+
+  if(error){
+
+    console.error(error);
+
+    pesan("Toko gagal dibuat: " + error.message);
+
+    return;
+  }
+
+  pesan("Toko berhasil dibuat 🎉");
+
+  // Masuk ke halaman toko
+  tokoSaya();
+
+}
   
 function tambahProduk(){
   
