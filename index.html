@@ -2617,31 +2617,73 @@ async function tokoSaya(){
         </div>
 
         <div class="form-group">
-          <label>Deskripsi Toko</label>
+  <label>Deskripsi Toko</label>
 
-          <textarea
-            id="editTokoDeskripsi"
-            rows="4"
-            placeholder="Ceritakan tentang toko kamu">${escapeHTML(toko.description || "")}</textarea>
-        </div>
+  <textarea
+    id="editTokoDeskripsi"
+    rows="4"
+    placeholder="Ceritakan tentang toko kamu">${escapeHTML(toko.description || "")}</textarea>
+</div>
 
-        <div class="form-group">
-          <label>Link Logo / Foto Toko</label>
+<div class="form-group">
 
-          <input
-            id="editTokoLogo"
-            type="url"
-            value="${escapeHTML(toko.logo_url || "")}"
-            placeholder="https://...">
-        </div>
+  <label>🖼️ Logo / Foto Toko</label>
 
-        <button
-          class="checkout"
-          onclick="simpanEditProfilToko()">
+  ${
+    toko.logo_url
+    ? `
+      <div style="
+        text-align:center;
+        margin-bottom:10px">
 
-          💾 Simpan Perubahan
+        <img
+          src="${escapeHTML(toko.logo_url)}"
+          alt="Logo toko"
+          style="
+            width:120px;
+            height:120px;
+            object-fit:cover;
+            border-radius:50%;
+            border:1px solid #ddd">
 
-        </button>
+      </div>
+    `
+    : ""
+  }
+
+  <input
+    id="editTokoLogoFile"
+    type="file"
+    accept="image/*"
+    onchange="previewEditLogoToko(event)">
+
+  <div
+    id="previewEditLogoToko"
+    style="
+      margin-top:10px;
+      text-align:center">
+
+  </div>
+
+  <small style="
+    display:block;
+    margin-top:6px;
+    color:#777">
+
+    Pilih foto baru dari galeri HP.
+    Maksimal 5 MB.
+
+  </small>
+
+</div>
+
+<button
+  class="checkout"
+  onclick="simpanEditProfilToko()">
+
+  💾 Simpan Perubahan
+
+</button>
 
         <button
           onclick="tokoSaya()"
@@ -2690,51 +2732,98 @@ async function tokoSaya(){
   const deskripsi =
     document.getElementById("editTokoDeskripsi").value.trim();
 
-  const logo =
-    document.getElementById("editTokoLogo").value.trim();
+  const fileInput =
+    document.getElementById("editTokoLogoFile");
+
+  const file =
+    fileInput ? fileInput.files[0] : null;
 
   if(!nama){
     pesan("Nama toko wajib diisi");
     return;
   }
 
-  try{
+  // Ambil data toko lama
+  const { data: tokoLama, error: ambilError } =
+    await supabaseClient
+      .from("shops")
+      .select("*")
+      .eq("owner_id", pengguna.id)
+      .maybeSingle();
 
-    const { error } =
-      await supabaseClient
-        .from("shops")
-        .update({
-          name: nama,
-          location: lokasi,
-          phone: phone,
-          description: deskripsi,
-          logo_url: logo || null,
-          updated_at: new Date().toISOString()
-        })
-        .eq("owner_id", pengguna.id);
+  if(ambilError){
 
-    if(error){
+    console.error(ambilError);
 
-      console.error("Gagal update toko:", error);
+    pesan(
+      "Gagal mengambil data toko: " +
+      ambilError.message
+    );
 
-      pesan("Gagal menyimpan perubahan: " + error.message);
+    return;
+  }
 
-      return;
-    }
+  if(!tokoLama){
 
-    pesan("Profil toko berhasil diperbarui 🎉");
+    pesan("Toko belum ditemukan");
 
     tokoSaya();
 
-  }catch(error){
+    return;
+  }
 
-    console.error("Kesalahan simpan profil:", error);
+  // Gunakan logo lama jika tidak memilih foto baru
+  let logoUrl = tokoLama.logo_url || null;
 
-    pesan("Terjadi kesalahan saat menyimpan profil toko");
+  // Jika memilih foto baru, upload
+  if(file){
+
+    logoUrl = await uploadLogoToko(file);
+
+    if(!logoUrl){
+      return;
+    }
 
   }
 
-}
+  // Simpan perubahan
+  const { error } =
+    await supabaseClient
+      .from("shops")
+      .update({
+
+        name: nama,
+
+        location: lokasi,
+
+        phone: phone,
+
+        description: deskripsi,
+
+        logo_url: logoUrl,
+
+        updated_at: new Date().toISOString()
+
+      })
+      .eq("owner_id", pengguna.id);
+
+  if(error){
+
+    console.error(error);
+
+    pesan(
+      "Gagal menyimpan perubahan: " +
+      error.message
+    );
+
+    return;
+  }
+
+  pesan("Profil toko berhasil diperbarui 🎉");
+
+  tokoSaya();
+
+    }
 
   function previewLogoToko(event){
 
@@ -2781,6 +2870,58 @@ async function tokoSaya(){
 
 }
 
+function previewEditLogoToko(event){
+
+  const file = event.target.files[0];
+
+  const preview =
+    document.getElementById("previewEditLogoToko");
+
+  if(!file || !preview){
+    return;
+  }
+
+  if(!file.type.startsWith("image/")){
+
+    pesan("File harus berupa gambar");
+
+    event.target.value = "";
+
+    return;
+  }
+
+  if(file.size > 5 * 1024 * 1024){
+
+    pesan("Ukuran foto maksimal 5 MB");
+
+    event.target.value = "";
+
+    return;
+  }
+
+  const reader = new FileReader();
+
+  reader.onload = function(e){
+
+    preview.innerHTML = `
+
+      <img
+        src="${e.target.result}"
+        alt="Preview foto toko"
+        style="
+          width:120px;
+          height:120px;
+          object-fit:cover;
+          border-radius:50%;
+          border:1px solid #ddd">
+
+    `;
+
+  };
+
+  reader.readAsDataURL(file);
+
+}
   async function uploadLogoToko(file){
 
   if(!file){
