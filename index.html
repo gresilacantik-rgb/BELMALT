@@ -1746,116 +1746,208 @@ rupiah(total+ongkir);
    BUAT PESANAN
 ========================= */
 
-function buatPesanan(){
+async function buatPesanan(){
 
-const nama=
-document.getElementById("namaPenerima")
-.value.trim();
+  if(!pengguna || !pengguna.id){
+    pesan("Silakan login terlebih dahulu");
+    return;
+  }
 
-const nomor=
-document.getElementById("nomorHP")
-.value.trim();
+  const nama =
+    document.getElementById("namaPenerima")
+    .value.trim();
 
-const alamat=
-document.getElementById("alamat")
-.value.trim();
+  const nomor =
+    document.getElementById("nomorHP")
+    .value.trim();
 
-const kota=
-document.getElementById("kota")
-.value;
+  const alamat =
+    document.getElementById("alamat")
+    .value.trim();
 
-if(nama.length<3){
+  const kota =
+    document.getElementById("kota")
+    .value;
 
-pesan("Masukkan nama penerima");
+  if(nama.length < 3){
+    pesan("Masukkan nama penerima");
+    return;
+  }
 
-return;
+  if(!/^[0-9+ -]{8,15}$/.test(nomor)){
+    pesan("Nomor HP tidak valid");
+    return;
+  }
 
-}
+  if(alamat.length < 8){
+    pesan("Alamat terlalu pendek");
+    return;
+  }
 
-if(!/^[0-9+ -]{8,15}$/.test(nomor)){
+  if(!kota){
+    pesan("Pilih kota/kabupaten");
+    return;
+  }
 
-pesan("Nomor HP tidak valid");
+  const pilihanPengiriman =
+    document.querySelector(
+      'input[name="pengiriman"]:checked'
+    );
 
-return;
+  const pilihanPembayaran =
+    document.querySelector(
+      'input[name="pembayaran"]:checked'
+    );
 
-}
+  if(!pilihanPengiriman){
+    pesan("Pilih metode pengiriman");
+    return;
+  }
 
-if(alamat.length<8){
+  if(!pilihanPembayaran){
+    pesan("Pilih metode pembayaran");
+    return;
+  }
 
-pesan("Alamat terlalu pendek");
+  if(!keranjang || keranjang.length === 0){
+    pesan("Keranjang masih kosong");
+    return;
+  }
 
-return;
+  const pengiriman =
+    pilihanPengiriman.value;
 
-}
+  const pembayaran =
+    pilihanPembayaran.value;
 
-if(!kota){
+  let subtotal = 0;
 
-pesan("Pilih kota/kabupaten");
+  keranjang.forEach(function(item){
 
-return;
+    subtotal +=
+      Number(item.harga) *
+      Number(item.jumlah);
 
-}
+  });
 
-const pengiriman=
-document.querySelector(
-'input[name="pengiriman"]:checked'
-).value;
+  const ongkir =
+    pengiriman === "Express"
+    ? 20000
+    : 10000;
 
-const pembayaran=
-document.querySelector(
-'input[name="pembayaran"]:checked'
-).value;
+  const total =
+    subtotal + ongkir;
 
-let subtotal=0;
+  const alamatLengkap =
+    nama +
+    ", " +
+    nomor +
+    ", " +
+    alamat +
+    ", " +
+    kota;
 
-keranjang.forEach(function(item){
+  // Simpan pesanan utama ke Supabase
+  const { data: pesananBaru, error: orderError } =
+    await supabaseClient
+    .from("Orders")
+    .insert({
+      Total: total,
+      Status: "Menunggu diproses",
+      "Metode-pembayaran": pembayaran,
+      Alamat: alamatLengkap,
+      user_id: pengguna.id
+    })
+    .select()
+    .single();
 
-subtotal+=
-item.harga*item.jumlah;
+  if(orderError){
 
-});
+    console.error(orderError);
 
-const ongkir=
-pengiriman==="Express"
-?20000
-:10000;
+    pesan(
+      "Pesanan gagal disimpan: " +
+      orderError.message
+    );
 
-const total=
-subtotal+ongkir;
+    return;
+  }
 
-const nomorPesanan=
-"BM"+
-Date.now()
-.toString()
-.slice(-8);
+  // Simpan semua produk yang dibeli
+  const itemPesanan =
+    keranjang.map(function(item){
 
-const dataPesanan={
+      return {
+        Order_id: pesananBaru.id,
+        product_id: item.id,
+        Jumlah: Number(item.jumlah),
+        Harga: Number(item.harga)
+      };
 
-nomorPesanan,
-nama,
-nomor,
-alamat,
-kota,
-pengiriman,
-pembayaran,
-subtotal,
-ongkir,
-total,
-produk:[...keranjang],
-status:"Menunggu diproses",
-tanggal:new Date().toLocaleString("id-ID")
+    });
 
-};
+  const { error: itemError } =
+    await supabaseClient
+    .from("Order_items")
+    .insert(itemPesanan);
 
-pesanan.unshift(dataPesanan);
+  if(itemError){
 
-simpanPesanan();
+    console.error(itemError);
 
-keranjang=[];
+    pesan(
+      "Pesanan dibuat tetapi detail produk gagal disimpan: " +
+      itemError.message
+    );
 
-simpanKeranjang();
+    return;
+  }
 
-tampilkanPesananBerhasil(dataPesanan);
+  // Tetap buat nomor pesanan untuk tampilan aplikasi
+  const nomorPesanan =
+    "BM" +
+    Date.now()
+    .toString()
+    .slice(-8);
+
+  const dataPesanan = {
+
+    id: pesananBaru.id,
+
+    nomorPesanan,
+
+    nama,
+    nomor,
+    alamat,
+    kota,
+
+    pengiriman,
+    pembayaran,
+
+    subtotal,
+    ongkir,
+    total,
+
+    produk: [...keranjang],
+
+    status: "Menunggu diproses",
+
+    tanggal:
+      new Date()
+      .toLocaleString("id-ID")
+
+  };
+
+  // Simpan juga ke data lokal aplikasi
+  pesanan.unshift(dataPesanan);
+
+  simpanPesanan();
+
+  keranjang = [];
+
+  simpanKeranjang();
+
+  tampilkanPesananBerhasil(dataPesanan);
 
 }
 
