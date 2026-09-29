@@ -2322,102 +2322,118 @@ async function tokoSaya(){
     return;
   }
 
-  const { data: toko, error } =
-    await supabaseClient
-    .from("shops")
-    .select("*")
-    .eq("owner_id", pengguna.id)
-    .maybeSingle();
+  try{
 
-  if(error){
-    console.error(error);
-    pesan("Gagal memeriksa toko: " + error.message);
-    return;
-  }
+    const { data: toko, error } =
+      await supabaseClient
+        .from("shops")
+        .select("*")
+        .eq("owner_id", pengguna.id)
+        .maybeSingle();
 
-  // BELUM PUNYA TOKO
-  if(!toko){
+    if(error){
+      console.error("Error toko:", error);
+      pesan("Gagal memeriksa toko: " + error.message);
+      return;
+    }
 
-    document.getElementById("halaman").innerHTML=`
+    // Jika belum punya toko
+    if(!toko){
+
+      document.getElementById("halaman").innerHTML = `
+
+        <div class="judul">
+          🏪 Toko Saya
+        </div>
+
+        <div class="card">
+
+          <h3>Buka Toko Kamu</h3>
+
+          <p style="font-size:13px;color:#777">
+            Kamu belum memiliki toko.
+            Buka toko untuk mulai menjual produk di BELMALT.
+          </p>
+
+          <button
+            class="checkout"
+            onclick="bukaToko()">
+
+            ➕ Buka Toko
+
+          </button>
+
+        </div>
+
+      `;
+
+      return;
+    }
+
+    // Jika sudah punya toko
+    document.getElementById("halaman").innerHTML = `
 
       <div class="judul">
-        🏪 Toko Saya
+        🏪 ${toko.name || "Toko Saya"}
       </div>
 
       <div class="card">
 
-        <h3>Buka Toko Kamu</h3>
+        <h3>Kelola Produk</h3>
 
         <p style="font-size:13px;color:#777">
-          Kamu belum memiliki toko. Buka toko untuk mulai menjual produk di BELMALT.
+          Tambahkan dan kelola produk yang kamu jual di BELMALT.
         </p>
 
         <button
           class="checkout"
-          onclick="bukaToko()">
+          onclick="tambahProduk()">
 
-          ➕ Buka Toko
+          ➕ Tambah Produk
 
         </button>
 
       </div>
 
-    `;
+      <div class="card">
 
-    return;
-  }
+        <h3>📦 Produk Saya</h3>
 
-  // SUDAH PUNYA TOKO
-  document.getElementById("halaman").innerHTML=`
+        <div id="produkSaya">
+          Memuat produk...
+        </div>
 
-    <div class="judul">
-      🏪 ${toko.name}
-    </div>
-
-    <div class="card">
-
-      <h3>Kelola Produk</h3>
-
-      <p style="font-size:13px;color:#777">
-        Kelola produk yang kamu jual di BELMALT.
-      </p>
-
-      <button
-        class="checkout"
-        onclick="tambahProduk()">
-
-        ➕ Tambah Produk
-
-      </button>
-
-    </div>
-
-    <div class="card">
-
-      <h3>Produk Saya</h3>
-
-      <div id="produkSaya">
-        Memuat produk...
       </div>
 
-    </div>
-    
-    <div class="card">
+      <div class="card">
 
-  <h3>📦 Pesanan Masuk</h3>
+        <h3>📦 Pesanan Masuk</h3>
 
-  <div id="pesananMasuk">
-    Memuat pesanan...
-  </div>
+        <div id="pesananMasuk">
+          Memuat pesanan...
+        </div>
 
-</div>
+      </div>
 
-  `;
+    `;
 
-  muatProdukSaya();
-  muatPesananMasuk();
+    if(typeof muatProdukSaya === "function"){
+      muatProdukSaya();
+    }
+
+    if(typeof muatPesananMasuk === "function"){
+      muatPesananMasuk();
+    }
+
+  }catch(error){
+
+    console.error("Kesalahan Toko Saya:", error);
+
+    pesan("Terjadi kesalahan saat membuka Toko Saya");
 
   }
+
+}
 
   async function muatPesananMasuk(){
 
