@@ -2786,8 +2786,6 @@ async function simpanToko(){
   
 function tambahProduk(){
   
-  alert("FUNGSI TAMBAH PRODUK TERJALAN");
-  
   document.getElementById("halaman").innerHTML=`
 
   <div class="judul">
@@ -3252,6 +3250,15 @@ async function muatProdukSaya(){
       color:#777">
 
       📍 ${escapeHTML(produk.location || "-")}
+
+      </p>
+
+      <p style="
+      font-size:13px;
+      color:#777;
+      font-weight:bold">
+
+      🏪 ${escapeHTML(toko.name || "Toko Saya")}
 
       </p>
 
