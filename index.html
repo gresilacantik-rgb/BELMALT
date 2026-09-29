@@ -2736,6 +2736,106 @@ async function tokoSaya(){
 
 }
 
+  function previewLogoToko(event){
+
+  const file = event.target.files[0];
+  const preview = document.getElementById("previewLogoToko");
+
+  if(!file || !preview){
+    return;
+  }
+
+  if(!file.type.startsWith("image/")){
+    pesan("File harus berupa gambar");
+    event.target.value = "";
+    return;
+  }
+
+  if(file.size > 5 * 1024 * 1024){
+    pesan("Ukuran foto maksimal 5 MB");
+    event.target.value = "";
+    return;
+  }
+
+  const reader = new FileReader();
+
+  reader.onload = function(e){
+
+    preview.innerHTML = `
+
+      <img
+        src="${e.target.result}"
+        alt="Preview logo toko"
+        style="
+          width:120px;
+          height:120px;
+          object-fit:cover;
+          border-radius:50%;
+          border:1px solid #ddd">
+
+    `;
+
+  };
+
+  reader.readAsDataURL(file);
+
+}
+
+  async function uploadLogoToko(file){
+
+  if(!file){
+    return null;
+  }
+
+  if(!pengguna || !pengguna.id){
+    pesan("Silakan login terlebih dahulu");
+    return null;
+  }
+
+  const ekstensi =
+    file.name.split(".").pop().toLowerCase();
+
+  const namaFile =
+  pengguna.id + "_" + Date.now() + "." + ekstensi;
+
+const path =
+  namaFile;
+
+  const { error: uploadError } =
+    await supabaseClient
+      .storage
+      .from("shop_logos")
+      .upload(path, file, {
+        cacheControl: "3600",
+        upsert: false
+      });
+
+  if(uploadError){
+
+    console.error("Upload logo gagal:", uploadError);
+
+    pesan("Foto gagal diupload: " + uploadError.message);
+
+    return null;
+  }
+
+  const { data } =
+    supabaseClient
+      .storage
+      .from("shop_logos")
+      .getPublicUrl(path);
+
+  if(!data || !data.publicUrl){
+
+    pesan("URL foto tidak berhasil dibuat");
+
+    return null;
+  }
+
+  return data.publicUrl;
+
+}
+
   async function bukaHalamanToko(shopId){
 
   if(!shopId){
@@ -3196,24 +3296,33 @@ async function tokoSaya(){
 
       <div class="form-group">
 
-        <label>Logo / Foto Toko</label>
+  <label>🖼️ Logo / Foto Toko</label>
 
-        <input
-          id="tokoLogo"
-          type="url"
-          placeholder="Masukkan link foto/logo toko">
+  <input
+    id="tokoLogoFile"
+    type="file"
+    accept="image/*"
+    onchange="previewLogoToko(event)">
 
-        <small style="
-          display:block;
-          margin-top:6px;
-          color:#777">
+  <div
+    id="previewLogoToko"
+    style="
+      margin-top:10px;
+      text-align:center">
 
-          Untuk sementara gunakan link gambar.
-          Upload langsung dari galeri akan kita buat setelah penyimpanan toko sudah dipastikan berjalan.
+  </div>
 
-        </small>
+  <small style="
+    display:block;
+    margin-top:6px;
+    color:#777">
 
-      </div>
+    Pilih foto toko dari galeri HP.
+    Maksimal 5 MB.
+
+  </small>
+
+</div>
 
       <button
         class="checkout"
@@ -3261,8 +3370,11 @@ async function simpanToko(){
   const deskripsi =
     document.getElementById("tokoDeskripsi").value.trim();
 
-  const logo =
-    document.getElementById("tokoLogo").value.trim();
+  const fileInput =
+    document.getElementById("tokoLogoFile");
+
+  const file =
+    fileInput ? fileInput.files[0] : null;
 
   if(!nama){
     pesan("Nama toko wajib diisi");
@@ -3278,15 +3390,39 @@ async function simpanToko(){
       .maybeSingle();
 
   if(cekError){
+
     console.error(cekError);
-    pesan("Gagal memeriksa toko: " + cekError.message);
+
+    pesan(
+      "Gagal memeriksa toko: " +
+      cekError.message
+    );
+
     return;
   }
 
   if(tokoLama){
+
     pesan("Kamu sudah memiliki toko");
+
     tokoSaya();
+
     return;
+  }
+
+  // Upload foto toko jika dipilih
+  let logoUrl = null;
+
+  if(file){
+
+    logoUrl = await uploadLogoToko(file);
+
+    if(!logoUrl){
+
+      return;
+
+    }
+
   }
 
   // Simpan toko
@@ -3294,12 +3430,19 @@ async function simpanToko(){
     await supabaseClient
       .from("shops")
       .insert({
+
         owner_id: pengguna.id,
+
         name: nama,
+
         location: lokasi,
+
         phone: phone,
+
         description: deskripsi,
-        logo_url: logo || null
+
+        logo_url: logoUrl
+
       })
       .select()
       .single();
@@ -3308,9 +3451,13 @@ async function simpanToko(){
 
     console.error(error);
 
-    pesan("Toko gagal dibuat: " + error.message);
+    pesan(
+      "Toko gagal dibuat: " +
+      error.message
+    );
 
     return;
+
   }
 
   pesan("Toko berhasil dibuat 🎉");
