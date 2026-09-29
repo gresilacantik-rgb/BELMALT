@@ -2423,7 +2423,72 @@ async function tokoSaya(){
     document.getElementById("halaman").innerHTML = `
 
       <div class="judul">
-        🏪 ${toko.name || "Toko Saya"}
+        🏪 ${escapeHTML(toko.name || "Toko Saya")}
+      </div>
+
+      <div class="card">
+
+        <h3>🏪 Profil Toko</h3>
+
+        ${
+          toko.logo_url
+          ? `
+            <div style="
+              text-align:center;
+              margin-bottom:15px">
+
+              <img
+                src="${escapeHTML(toko.logo_url)}"
+                alt="Logo toko"
+                style="
+                  width:100px;
+                  height:100px;
+                  object-fit:cover;
+                  border-radius:50%;
+                  border:1px solid #ddd">
+
+            </div>
+          `
+          : `
+            <div style="
+              text-align:center;
+              font-size:60px;
+              margin-bottom:10px">
+
+              🏪
+
+            </div>
+          `
+        }
+
+        <p>
+          <strong>Nama:</strong>
+          ${escapeHTML(toko.name || "-")}
+        </p>
+
+        <p>
+          <strong>📍 Lokasi:</strong>
+          ${escapeHTML(toko.location || "-")}
+        </p>
+
+        <p>
+          <strong>📱 WhatsApp:</strong>
+          ${escapeHTML(toko.phone || "-")}
+        </p>
+
+        <p>
+          <strong>📝 Deskripsi:</strong>
+          ${escapeHTML(toko.description || "-")}
+        </p>
+
+        <button
+          class="checkout"
+          onclick="editProfilToko()">
+
+          ✏️ Edit Profil Toko
+
+        </button>
+
       </div>
 
       <div class="card">
@@ -2479,6 +2544,193 @@ async function tokoSaya(){
     console.error("Kesalahan Toko Saya:", error);
 
     pesan("Terjadi kesalahan saat membuka Toko Saya");
+
+  }
+
+}
+
+  async function editProfilToko(){
+
+  if(!pengguna || !pengguna.id){
+    pesan("Silakan login terlebih dahulu");
+    return;
+  }
+
+  try{
+
+    const { data: toko, error } =
+      await supabaseClient
+        .from("shops")
+        .select("*")
+        .eq("owner_id", pengguna.id)
+        .maybeSingle();
+
+    if(error){
+      console.error("Error mengambil toko:", error);
+      pesan("Gagal mengambil data toko: " + error.message);
+      return;
+    }
+
+    if(!toko){
+      pesan("Toko belum ditemukan");
+      tokoSaya();
+      return;
+    }
+
+    document.getElementById("halaman").innerHTML = `
+
+      <div class="judul">
+        ✏️ Edit Profil Toko
+      </div>
+
+      <div class="card">
+
+        <div class="form-group">
+          <label>Nama Toko</label>
+
+          <input
+            id="editTokoNama"
+            type="text"
+            value="${escapeHTML(toko.name || "")}"
+            placeholder="Nama toko">
+        </div>
+
+        <div class="form-group">
+          <label>Alamat / Lokasi Toko</label>
+
+          <input
+            id="editTokoLokasi"
+            type="text"
+            value="${escapeHTML(toko.location || "")}"
+            placeholder="Contoh: Ternate, Maluku Utara">
+        </div>
+
+        <div class="form-group">
+          <label>Nomor WhatsApp</label>
+
+          <input
+            id="editTokoPhone"
+            type="tel"
+            inputmode="numeric"
+            value="${escapeHTML(toko.phone || "")}"
+            placeholder="081234567890">
+        </div>
+
+        <div class="form-group">
+          <label>Deskripsi Toko</label>
+
+          <textarea
+            id="editTokoDeskripsi"
+            rows="4"
+            placeholder="Ceritakan tentang toko kamu">${escapeHTML(toko.description || "")}</textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Link Logo / Foto Toko</label>
+
+          <input
+            id="editTokoLogo"
+            type="url"
+            value="${escapeHTML(toko.logo_url || "")}"
+            placeholder="https://...">
+        </div>
+
+        <button
+          class="checkout"
+          onclick="simpanEditProfilToko()">
+
+          💾 Simpan Perubahan
+
+        </button>
+
+        <button
+          onclick="tokoSaya()"
+          style="
+            width:100%;
+            margin-top:10px;
+            padding:12px;
+            border:1px solid #ddd;
+            border-radius:8px;
+            background:white">
+
+          ← Batal
+
+        </button>
+
+      </div>
+
+    `;
+
+  }catch(error){
+
+    console.error("Kesalahan edit toko:", error);
+
+    pesan("Terjadi kesalahan saat membuka edit profil");
+
+  }
+
+}
+
+  async function simpanEditProfilToko(){
+
+  if(!pengguna || !pengguna.id){
+    pesan("Silakan login terlebih dahulu");
+    return;
+  }
+
+  const nama =
+    document.getElementById("editTokoNama").value.trim();
+
+  const lokasi =
+    document.getElementById("editTokoLokasi").value.trim();
+
+  const phone =
+    document.getElementById("editTokoPhone").value.trim();
+
+  const deskripsi =
+    document.getElementById("editTokoDeskripsi").value.trim();
+
+  const logo =
+    document.getElementById("editTokoLogo").value.trim();
+
+  if(!nama){
+    pesan("Nama toko wajib diisi");
+    return;
+  }
+
+  try{
+
+    const { error } =
+      await supabaseClient
+        .from("shops")
+        .update({
+          name: nama,
+          location: lokasi,
+          phone: phone,
+          description: deskripsi,
+          logo_url: logo || null,
+          updated_at: new Date().toISOString()
+        })
+        .eq("owner_id", pengguna.id);
+
+    if(error){
+
+      console.error("Gagal update toko:", error);
+
+      pesan("Gagal menyimpan perubahan: " + error.message);
+
+      return;
+    }
+
+    pesan("Profil toko berhasil diperbarui 🎉");
+
+    tokoSaya();
+
+  }catch(error){
+
+    console.error("Kesalahan simpan profil:", error);
+
+    pesan("Terjadi kesalahan saat menyimpan profil toko");
 
   }
 
@@ -2904,7 +3156,7 @@ async function tokoSaya(){
   document.getElementById("halaman").innerHTML=`
 
     <div class="judul">
-      🏪 Buka Toko
+      🏪 Profil Toko
     </div>
 
     <div class="card">
@@ -2918,18 +3170,19 @@ async function tokoSaya(){
       </div>
 
       <div class="form-group">
-        <label>Lokasi</label>
+        <label>Alamat / Lokasi Toko</label>
         <input
           id="tokoLokasi"
           type="text"
-          placeholder="Contoh: Ternate">
+          placeholder="Contoh: Ternate, Maluku Utara">
       </div>
 
       <div class="form-group">
-        <label>Nomor HP</label>
+        <label>Nomor WhatsApp</label>
         <input
           id="tokoPhone"
           type="tel"
+          inputmode="numeric"
           placeholder="Contoh: 081234567890">
       </div>
 
@@ -2937,22 +3190,36 @@ async function tokoSaya(){
         <label>Deskripsi Toko</label>
         <textarea
           id="tokoDeskripsi"
+          rows="4"
           placeholder="Ceritakan tentang toko kamu"></textarea>
       </div>
 
       <div class="form-group">
-        <label>Link Logo Toko</label>
+
+        <label>Logo / Foto Toko</label>
+
         <input
           id="tokoLogo"
           type="url"
-          placeholder="https://...">
+          placeholder="Masukkan link foto/logo toko">
+
+        <small style="
+          display:block;
+          margin-top:6px;
+          color:#777">
+
+          Untuk sementara gunakan link gambar.
+          Upload langsung dari galeri akan kita buat setelah penyimpanan toko sudah dipastikan berjalan.
+
+        </small>
+
       </div>
 
       <button
         class="checkout"
         onclick="simpanToko()">
 
-        💾 Buka Toko
+        💾 Simpan Profil Toko
 
       </button>
 
