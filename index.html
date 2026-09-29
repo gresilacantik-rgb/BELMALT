@@ -2695,7 +2695,7 @@ function tambahProduk(){
   document.getElementById("halaman").innerHTML=`
 
   <div class="judul">
-  ➕ Tambah Produk
+    ➕ Tambah Produk
   </div>
 
   <div class="card">
@@ -2713,6 +2713,7 @@ function tambahProduk(){
       <input
         id="produkHarga"
         type="number"
+        min="1"
         placeholder="Contoh: 75000">
     </div>
 
@@ -2721,6 +2722,7 @@ function tambahProduk(){
       <input
         id="produkStok"
         type="number"
+        min="0"
         placeholder="Contoh: 10">
     </div>
 
@@ -2728,12 +2730,12 @@ function tambahProduk(){
       <label>Kategori</label>
       <select id="produkKategori">
         <option value="">Pilih kategori</option>
-        <option>Fashion</option>
-        <option>Kecantikan</option>
-        <option>Makanan</option>
-        <option>Elektronik</option>
-        <option>Rumah</option>
-        <option>Lainnya</option>
+        <option value="Fashion">Fashion</option>
+        <option value="Kecantikan">Kecantikan</option>
+        <option value="Makanan">Makanan</option>
+        <option value="Elektronik">Elektronik</option>
+        <option value="Rumah">Rumah</option>
+        <option value="Lainnya">Lainnya</option>
       </select>
     </div>
 
@@ -2753,11 +2755,16 @@ function tambahProduk(){
     </div>
 
     <div class="form-group">
-      <label>Link Foto Produk</label>
+      <label>Foto Produk</label>
+
       <input
         id="produkGambar"
-        type="url"
-        placeholder="https://...">
+        type="file"
+        accept="image/*">
+
+      <small>
+        Pilih foto produk dari Galeri HP
+      </small>
     </div>
 
     <button
