@@ -3126,7 +3126,7 @@ async function muatProdukSaya(){
   const { data: toko, error: tokoError } =
     await supabaseClient
     .from("shops")
-    .select("id")
+    .select("id, name")
     .eq("owner_id", pengguna.id)
     .maybeSingle();
 
@@ -3261,10 +3261,64 @@ async function muatProdukSaya(){
       🏪 ${escapeHTML(toko.name || "Toko Saya")}
 
       </p>
+      <button
+        class="checkout"
+        style="background:#dc3545;margin-top:8px"
+        onclick="hapusProduk('${produk.id}')">
+
+        🗑️ Hapus Produk
+
+      </button>
 
     </div>
 
   `).join("");
+
+}
+
+async function hapusProduk(id){
+
+  const yakin = confirm(
+    "Yakin ingin menghapus produk ini?"
+  );
+
+  if(!yakin){
+    return;
+  }
+
+  try{
+
+    const { error } =
+      await supabaseClient
+      .from("products")
+      .delete()
+      .eq("id", id);
+
+    if(error){
+
+      console.error("Gagal menghapus produk:", error);
+
+      pesan(
+        "Gagal menghapus produk: " +
+        error.message
+      );
+
+      return;
+    }
+
+    pesan("Produk berhasil dihapus");
+
+    muatProdukSaya();
+
+  }catch(error){
+
+    console.error(error);
+
+    pesan(
+      "Terjadi kesalahan saat menghapus produk"
+    );
+
+  }
 
 }
 
