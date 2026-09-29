@@ -841,6 +841,8 @@ async function renderBeranda(){
 
       id: produk.id,
 
+      shop_id: produk.shop_id,
+
       nama: produk.name,
 
       harga: Number(produk.price),
@@ -1069,15 +1071,21 @@ function buatProdukHTML(data){
         📍 ${escapeHTML(item.lokasi || "-")}
         </div>
 
-        <div style="
-        font-size:12px;
-        color:#555;
-        margin-top:5px;
-        font-weight:bold">
+        <button
+  onclick="bukaHalamanToko(${item.shop_id})"
+  style="
+  border:none;
+  background:none;
+  padding:0;
+  margin-top:5px;
+  font-size:12px;
+  font-weight:bold;
+  color:#1261C9;
+  cursor:pointer">
 
-        🏪 ${escapeHTML(item.namaToko || "Toko")}
+  🏪 ${escapeHTML(item.namaToko || "Toko")}
 
-        </div>
+</button>
 
         <button
         class="tombol"
@@ -2471,6 +2479,226 @@ async function tokoSaya(){
     console.error("Kesalahan Toko Saya:", error);
 
     pesan("Terjadi kesalahan saat membuka Toko Saya");
+
+  }
+
+}
+
+  async function bukaHalamanToko(shopId){
+
+  if(!shopId){
+    pesan("Toko tidak ditemukan");
+    return;
+  }
+
+  document.getElementById("halaman").innerHTML = `
+
+    <div class="judul">
+      🏪 Toko
+    </div>
+
+    <div id="halamanToko">
+
+      <p style="
+      text-align:center;
+      color:#777">
+
+      Memuat toko...
+
+      </p>
+
+    </div>
+
+  `;
+
+  try{
+
+    // Ambil data toko
+    const { data: toko, error: tokoError } =
+      await supabaseClient
+      .from("shops")
+      .select("*")
+      .eq("id", shopId)
+      .maybeSingle();
+
+    if(tokoError){
+
+      console.error(tokoError);
+
+      document.getElementById("halamanToko").innerHTML =
+        "<p>Gagal memuat toko.</p>";
+
+      return;
+    }
+
+    if(!toko){
+
+      document.getElementById("halamanToko").innerHTML =
+        "<p>Toko tidak ditemukan.</p>";
+
+      return;
+    }
+
+    // Ambil semua produk milik toko
+    const { data: produk, error: produkError } =
+      await supabaseClient
+      .from("products")
+      .select("*")
+      .eq("shop_id", shopId)
+      .eq("active", true)
+      .order("created_at", {
+        ascending: false
+      });
+
+    if(produkError){
+
+      console.error(produkError);
+
+      document.getElementById("halamanToko").innerHTML =
+        "<p>Gagal memuat produk toko.</p>";
+
+      return;
+    }
+
+    let daftarProduk = "";
+
+    if(!produk || produk.length === 0){
+
+      daftarProduk = `
+        <p style="
+        text-align:center;
+        color:#777">
+
+        Toko ini belum memiliki produk.
+
+        </p>
+      `;
+
+    }else{
+
+      daftarProduk = produk.map(item => `
+
+        <div class="produk">
+
+          <div class="gambar">
+
+            ${
+              item.image_url
+              ? `
+              <img
+              src="${escapeHTML(item.image_url)}"
+              alt="${escapeHTML(item.name)}"
+              style="
+              width:100%;
+              height:100%;
+              object-fit:cover;
+              border-radius:10px">
+              `
+              : `
+              📦
+              `
+            }
+
+          </div>
+
+          <div class="info">
+
+            <div class="nama">
+              ${escapeHTML(item.name)}
+            </div>
+
+            <div class="harga">
+              💰 ${rupiah(Number(item.price))}
+            </div>
+
+            <div style="
+            font-size:11px;
+            color:#777;
+            margin-top:4px">
+
+              Stok: ${item.stock ?? 0}
+
+            </div>
+
+            <div class="lokasi">
+
+              📍 ${escapeHTML(item.location || "-")}
+
+            </div>
+
+            <button
+            class="tombol"
+            onclick="tambahKeranjang(${item.id})">
+
+              + Keranjang
+
+            </button>
+
+          </div>
+
+        </div>
+
+      `).join("");
+
+    }
+
+    document.getElementById("halamanToko").innerHTML = `
+
+      <div class="card">
+
+        <h2>
+          🏪 ${escapeHTML(toko.name || "Toko")}
+        </h2>
+
+        <p style="
+        color:#777;
+        font-size:13px">
+
+          📍 ${escapeHTML(toko.location || "-")}
+
+        </p>
+
+      </div>
+
+      <div class="judul">
+        Produk Toko
+      </div>
+
+      <div class="produk-grid">
+
+        ${daftarProduk}
+
+      </div>
+
+      <button
+      onclick="renderBeranda()"
+      style="
+      width:100%;
+      margin-top:15px;
+      padding:12px;
+      border:1px solid #ddd;
+      border-radius:8px;
+      background:white">
+
+        ← Kembali ke Beranda
+
+      </button>
+
+    `;
+
+  }catch(error){
+
+    console.error("Kesalahan halaman toko:", error);
+
+    const wadah =
+      document.getElementById("halamanToko");
+
+    if(wadah){
+
+      wadah.innerHTML =
+        "<p>Terjadi kesalahan saat membuka toko.</p>";
+
+    }
 
   }
 
