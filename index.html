@@ -2802,13 +2802,13 @@ async function simpanProduk(){
     return;
   }
 
-  // Cari toko milik pengguna yang sedang login
+  // Cari toko milik pengguna
   const { data: toko, error: tokoError } =
     await supabaseClient
-    .from("shops")
-    .select("id")
-    .eq("owner_id", pengguna.id)
-    .maybeSingle();
+      .from("shops")
+      .select("id")
+      .eq("owner_id", pengguna.id)
+      .maybeSingle();
 
   if(tokoError){
     console.error(tokoError);
@@ -2822,9 +2822,9 @@ async function simpanProduk(){
     return;
   }
 
+  // Ambil data form
   const nama =
-    document.getElementById("produkNama")
-    .value.trim();
+    document.getElementById("produkNama").value.trim();
 
   const harga =
     Number(document.getElementById("produkHarga").value);
@@ -2836,17 +2836,18 @@ async function simpanProduk(){
     document.getElementById("produkKategori").value;
 
   const lokasi =
-    document.getElementById("produkLokasi")
-    .value.trim();
+    document.getElementById("produkLokasi").value.trim();
 
   const deskripsi =
-    document.getElementById("produkDeskripsi")
-    .value.trim();
+    document.getElementById("produkDeskripsi").value.trim();
 
-  const gambar =
-    document.getElementById("produkGambar")
-    .value.trim();
+  const fileInput =
+    document.getElementById("produkGambar");
 
+  const file =
+    fileInput.files[0];
+
+  // Validasi
   if(!nama){
     pesan("Nama produk wajib diisi");
     return;
@@ -2867,23 +2868,73 @@ async function simpanProduk(){
     return;
   }
 
+  if(!file){
+    pesan("Silakan pilih foto produk dari Galeri");
+    return;
+  }
+
+  // Pastikan file adalah gambar
+  if(!file.type.startsWith("image/")){
+    pesan("File yang dipilih harus berupa gambar");
+    return;
+  }
+
+  // Nama file unik
+  const namaFile =
+    pengguna.id + "_" +
+    Date.now() + "_" +
+    file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
+
+  const path =
+    namaFile;
+
+  // Upload foto ke Supabase Storage
+  const { error: uploadError } =
+    await supabaseClient
+      .storage
+      .from("product-images")
+      .upload(path, file, {
+        cacheControl: "3600",
+        upsert: false
+      });
+
+  if(uploadError){
+
+    console.error(uploadError);
+
+    pesan("Foto gagal diupload: " + uploadError.message);
+
+    return;
+  }
+
+  // Ambil URL foto
+  const { data: publicUrlData } =
+    supabaseClient
+      .storage
+      .from("product-images")
+      .getPublicUrl(path);
+
+  const gambar =
+    publicUrlData.publicUrl;
+
+  // Simpan produk ke database
   const { data, error } =
     await supabaseClient
-    .from("products")
-    .insert({
-      name: nama,
-      price: harga,
-      stock: stok,
-      category: kategori,
-      location: lokasi,
-      description: deskripsi,
-      image_url: gambar || null,
-      active: true,
-      seller_id: pengguna.id,
-      shop_id: toko.id
-    })
-    .select()
-    .single();
+      .from("products")
+      .insert({
+        name: nama,
+        price: harga,
+        stock: stok,
+        category: kategori,
+        location: lokasi,
+        description: deskripsi,
+        image_url: gambar,
+        active: true,
+        seller_id: pengguna.id,
+        shop_id: toko.id
+      })
+      .select()
+      .single();
 
   if(error){
 
