@@ -2401,12 +2401,213 @@ async function tokoSaya(){
       </div>
 
     </div>
+    
+    <div class="card">
+
+  <h3>📦 Pesanan Masuk</h3>
+
+  <div id="pesananMasuk">
+    Memuat pesanan...
+  </div>
+
+</div>
 
   `;
 
   muatProdukSaya();
+  muatPesananMasuk();
 
   }
+
+  async function muatPesananMasuk(){
+
+  const wadah =
+    document.getElementById("pesananMasuk");
+
+  if(!wadah){
+    return;
+  }
+
+  if(!pengguna || !pengguna.id){
+    wadah.innerHTML =
+      "<p>Silakan login terlebih dahulu.</p>";
+    return;
+  }
+
+  // Cari toko milik pengguna
+  const { data: toko, error: tokoError } =
+    await supabaseClient
+    .from("shops")
+    .select("id")
+    .eq("owner_id", pengguna.id)
+    .maybeSingle();
+
+  if(tokoError){
+
+    console.error(tokoError);
+
+    wadah.innerHTML =
+      "<p>Gagal memeriksa toko.</p>";
+
+    return;
+  }
+
+  if(!toko){
+
+    wadah.innerHTML =
+      "<p>Kamu belum memiliki toko.</p>";
+
+    return;
+  }
+
+  // Ambil produk milik toko
+  const { data: produk, error: produkError } =
+    await supabaseClient
+    .from("products")
+    .select("id")
+    .eq("shop_id", toko.id);
+
+  if(produkError){
+
+    console.error(produkError);
+
+    wadah.innerHTML =
+      "<p>Gagal memuat produk toko.</p>";
+
+    return;
+  }
+
+  if(!produk || produk.length === 0){
+
+    wadah.innerHTML = `
+      <p style="
+      text-align:center;
+      color:#777;
+      font-size:13px">
+
+      Belum ada pesanan masuk.
+
+      </p>
+    `;
+
+    return;
+  }
+
+  const productIds =
+    produk.map(function(item){
+      return item.id;
+    });
+
+  // Ambil item pesanan yang berisi produk toko
+  const { data: itemPesanan, error: itemError } =
+    await supabaseClient
+    .from("Order_items")
+    .select("*")
+    .in("product_id", productIds);
+
+  if(itemError){
+
+    console.error(itemError);
+
+    wadah.innerHTML =
+      "<p>Gagal memuat pesanan.</p>";
+
+    return;
+  }
+
+  if(!itemPesanan || itemPesanan.length === 0){
+
+    wadah.innerHTML = `
+      <p style="
+      text-align:center;
+      color:#777;
+      font-size:13px">
+
+      Belum ada pesanan masuk.
+
+      </p>
+    `;
+
+    return;
+  }
+
+  const orderIds =
+    itemPesanan.map(function(item){
+      return item.Order_id;
+    });
+
+  // Ambil data pesanan
+  const { data: orders, error: orderError } =
+    await supabaseClient
+    .from("Orders")
+    .select("*")
+    .in("id", orderIds);
+
+  if(orderError){
+
+    console.error(orderError);
+
+    wadah.innerHTML =
+      "<p>Gagal memuat data pesanan.</p>";
+
+    return;
+  }
+
+  if(!orders || orders.length === 0){
+
+    wadah.innerHTML = `
+      <p style="
+      text-align:center;
+      color:#777;
+      font-size:13px">
+
+      Belum ada pesanan masuk.
+
+      </p>
+    `;
+
+    return;
+  }
+
+  wadah.innerHTML =
+    orders.map(function(order){
+
+      return `
+
+        <div class="card"
+        style="margin-top:10px">
+
+          <h3>
+            📦 Pesanan #${escapeHTML(order.id)}
+          </h3>
+
+          <p style="font-size:13px;color:#777">
+            Status:
+            <b>${escapeHTML(order.Status || "-")}</b>
+          </p>
+
+          <p style="font-size:13px">
+            Alamat:
+            ${escapeHTML(order.Alamat || "-")}
+          </p>
+
+          <p style="
+          color:#e53935;
+          font-weight:bold">
+
+            Total:
+            Rp ${Number(order.Total || 0)
+              .toLocaleString("id-ID")}
+
+          </p>
+
+        </div>
+
+      `;
+
+    }).join("");
+
+}
 
  function bukaToko(){
 
