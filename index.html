@@ -2496,7 +2496,6 @@ function tambahProduk(){
 }
 
 async function simpanProduk(){
-async function simpanProduk(){
 
   if(!pengguna || !pengguna.id){
     pesan("Silakan login terlebih dahulu");
@@ -2616,11 +2615,46 @@ async function muatProdukSaya(){
     return;
   }
 
+  // Cari toko milik pengguna yang sedang login
+  const { data: toko, error: tokoError } =
+    await supabaseClient
+    .from("shops")
+    .select("id")
+    .eq("owner_id", pengguna.id)
+    .maybeSingle();
+
+  if(tokoError){
+
+    console.error(tokoError);
+
+    wadah.innerHTML =
+      "<p>Gagal mencari toko.</p>";
+
+    return;
+  }
+
+  if(!toko){
+
+    wadah.innerHTML = `
+      <p style="
+      text-align:center;
+      color:#777;
+      font-size:13px">
+
+      Kamu belum mempunyai toko.
+
+      </p>
+    `;
+
+    return;
+  }
+
+  // Ambil produk yang hanya milik toko ini
   const { data, error } =
     await supabaseClient
     .from("products")
     .select("*")
-    .eq("seller_id", pengguna.id)
+    .eq("shop_id", toko.id)
     .order("created_at", {
       ascending: false
     });
