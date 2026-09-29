@@ -143,13 +143,18 @@ jobs:
 
                           MainActivity.this.filePathCallback = callback;
 
-                          Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                          Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
                           intent.addCategory(Intent.CATEGORY_OPENABLE);
                           intent.setType("image/*");
 
+                          Intent chooser = Intent.createChooser(
+                          intent,
+                          "Pilih Foto Toko"
+                          );
+                          
                           startActivityForResult(
-                                  intent,
-                                  FILE_CHOOSER_REQUEST_CODE
+                          chooser,
+                          FILE_CHOOSER_REQUEST_CODE
                           );
 
                           return true;
