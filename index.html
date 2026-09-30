@@ -3884,7 +3884,10 @@ const path =
     return;
   }
 
-  // Cari toko milik pengguna
+  // ==============================
+  // CARI TOKO MILIK PENJUAL
+  // ==============================
+
   const { data: toko, error: tokoError } =
     await supabaseClient
     .from("shops")
@@ -3910,11 +3913,14 @@ const path =
     return;
   }
 
-  // Ambil produk milik toko
+  // ==============================
+  // AMBIL PRODUK MILIK TOKO
+  // ==============================
+
   const { data: produk, error: produkError } =
     await supabaseClient
     .from("products")
-    .select("id")
+    .select("*")
     .eq("shop_id", toko.id);
 
   if(produkError){
@@ -3948,7 +3954,10 @@ const path =
       return item.id;
     });
 
-  // Ambil item pesanan yang berisi produk toko
+  // ==============================
+  // AMBIL ITEM PESANAN
+  // ==============================
+
   const { data: itemPesanan, error: itemError } =
     await supabaseClient
     .from("Order_items")
@@ -3982,16 +3991,24 @@ const path =
   }
 
   const orderIds =
-    itemPesanan.map(function(item){
-      return item.Order_id;
-    });
+    [...new Set(
+      itemPesanan.map(function(item){
+        return item.Order_id;
+      })
+    )];
 
-  // Ambil data pesanan
+  // ==============================
+  // AMBIL DATA PESANAN
+  // ==============================
+
   const { data: orders, error: orderError } =
     await supabaseClient
     .from("Orders")
     .select("*")
-    .in("id", orderIds);
+    .in("id", orderIds)
+    .order("id", {
+      ascending:false
+    });
 
   if(orderError){
 
@@ -4019,37 +4036,311 @@ const path =
     return;
   }
 
+  // ==============================
+  // TAMPILKAN PESANAN
+  // ==============================
+
   wadah.innerHTML =
     orders.map(function(order){
+
+      const status =
+        String(order.Status || "Menunggu diproses")
+        .trim();
+
+      const statusNormal =
+        status.toLowerCase();
+
+      let tombol = "";
+
+      // --------------------------------
+      // STATUS 1
+      // --------------------------------
+
+      if(
+        statusNormal === "menunggu diproses" ||
+        statusNormal === "menunggu"
+      ){
+
+        tombol = `
+
+          <button
+            onclick="prosesPesananPenjual('${escapeHTML(String(order.id))}')"
+            style="
+              width:100%;
+              margin-top:10px;
+              padding:12px;
+              border:none;
+              border-radius:8px;
+              background:#2196f3;
+              color:white;
+              font-weight:bold;
+              cursor:pointer">
+
+            ▶️ Proses Pesanan
+
+          </button>
+
+          <button
+            onclick="batalkanPesananPenjual('${escapeHTML(String(order.id))}')"
+            style="
+              width:100%;
+              margin-top:8px;
+              padding:11px;
+              border:1px solid #e53935;
+              border-radius:8px;
+              background:white;
+              color:#e53935;
+              font-weight:bold;
+              cursor:pointer">
+
+            ❌ Batalkan Pesanan
+
+          </button>
+
+        `;
+
+      }
+
+      // --------------------------------
+      // STATUS 2
+      // --------------------------------
+
+      else if(
+        statusNormal === "diproses"
+      ){
+
+        tombol = `
+
+          <button
+            onclick="serahkanPesananKeKurir('${escapeHTML(String(order.id))}')"
+            style="
+              width:100%;
+              margin-top:10px;
+              padding:12px;
+              border:none;
+              border-radius:8px;
+              background:#ff9800;
+              color:white;
+              font-weight:bold;
+              cursor:pointer">
+
+            🚚 Serahkan ke Jasa Kurir
+
+          </button>
+
+          <button
+            onclick="batalkanPesananPenjual('${escapeHTML(String(order.id))}')"
+            style="
+              width:100%;
+              margin-top:8px;
+              padding:11px;
+              border:1px solid #e53935;
+              border-radius:8px;
+              background:white;
+              color:#e53935;
+              font-weight:bold;
+              cursor:pointer">
+
+            ❌ Batalkan Pesanan
+
+          </button>
+
+        `;
+
+      }
+
+      // --------------------------------
+      // STATUS 3
+      // --------------------------------
+
+      else if(
+        statusNormal === "diserahkan ke kurir"
+      ){
+
+        tombol = `
+
+          <div style="
+            margin-top:10px;
+            padding:12px;
+            border-radius:8px;
+            background:#f5f5f5;
+            color:#555;
+            text-align:center;
+            font-weight:bold">
+
+            🚚 Pesanan telah diserahkan ke kurir
+
+          </div>
+
+        `;
+
+      }
+
+      // --------------------------------
+      // STATUS PENGIRIMAN KURIR
+      // --------------------------------
+
+      else if(
+        statusNormal === "dalam perjalanan" ||
+        statusNormal === "kurir menuju alamat pembeli" ||
+        statusNormal === "pesanan telah diterima"
+      ){
+
+        tombol = `
+
+          <div style="
+            margin-top:10px;
+            padding:12px;
+            border-radius:8px;
+            background:#f5f5f5;
+            color:#555;
+            text-align:center;
+            font-weight:bold">
+
+            🚚 Status diperbarui oleh jasa kurir
+
+          </div>
+
+        `;
+
+      }
+
+      // --------------------------------
+      // STATUS DIBATALKAN
+      // --------------------------------
+
+      else if(
+        statusNormal === "dibatalkan"
+      ){
+
+        tombol = `
+
+          <button
+            onclick="hapusPesananPenjual('${escapeHTML(String(order.id))}')"
+            style="
+              width:100%;
+              margin-top:10px;
+              padding:11px;
+              border:none;
+              border-radius:8px;
+              background:#e53935;
+              color:white;
+              font-weight:bold;
+              cursor:pointer">
+
+            🗑️ Hapus Pesanan
+
+          </button>
+
+        `;
+
+      }
+
+      // --------------------------------
+      // TIMELINE STATUS
+      // --------------------------------
+
+      const statusList = [
+        "Menunggu diproses",
+        "Diproses",
+        "Diserahkan ke kurir",
+        "Dalam perjalanan",
+        "Kurir menuju alamat pembeli",
+        "Pesanan telah diterima"
+      ];
+
+      const posisi =
+        statusList.findIndex(function(item){
+          return item.toLowerCase() ===
+            statusNormal;
+        });
+
+      const timeline =
+        statusList.map(function(item, index){
+
+          const sudahLewat =
+            posisi >= index;
+
+          return `
+
+            <div style="
+              display:flex;
+              align-items:center;
+              gap:8px;
+              margin:7px 0;
+              font-size:13px;
+              color:${sudahLewat ? "#222" : "#aaa"};
+              font-weight:${sudahLewat ? "bold" : "normal"}">
+
+              ${sudahLewat ? "✓" : "○"}
+
+              <span>
+                ${item}
+              </span>
+
+            </div>
+
+          `;
+
+        }).join("");
 
       return `
 
         <div class="card"
-        style="margin-top:10px">
+          style="
+            margin-top:12px;
+            padding:14px">
 
-          <h3>
-            📦 Pesanan #${escapeHTML(order.id)}
+          <h3 style="margin-top:0">
+
+            📦 Pesanan #${escapeHTML(String(order.id))}
+
           </h3>
 
-          <p style="font-size:13px;color:#777">
+          <p style="
+            font-size:13px;
+            color:#777">
+
             Status:
-            <b>${escapeHTML(order.Status || "-")}</b>
+            <b>
+              ${escapeHTML(status)}
+            </b>
+
           </p>
 
           <p style="font-size:13px">
-            Alamat:
-            ${escapeHTML(order.Alamat || "-")}
+
+            📍 Alamat Pembeli:<br>
+
+            <span>
+              ${escapeHTML(order.Alamat || "-")}
+            </span>
+
           </p>
 
           <p style="
-          color:#e53935;
-          font-weight:bold">
+            color:#e53935;
+            font-weight:bold">
 
-            Total:
+            💰 Total:
             Rp ${Number(order.Total || 0)
               .toLocaleString("id-ID")}
 
           </p>
+
+          <hr>
+
+          <p style="
+            font-weight:bold;
+            margin-bottom:8px">
+
+            📦 Perkembangan Pesanan
+
+          </p>
+
+          ${timeline}
+
+          ${tombol}
 
         </div>
 
@@ -4059,6 +4350,263 @@ const path =
 
 }
 
+
+// ======================================
+// PENJUAL MENEKAN "PROSES PESANAN"
+// ======================================
+
+async function prosesPesananPenjual(orderId){
+
+  const konfirmasi =
+    confirm(
+      "Proses pesanan ini?"
+    );
+
+  if(!konfirmasi){
+    return;
+  }
+
+  const { error } =
+    await supabaseClient
+    .from("Orders")
+    .update({
+      Status: "Diproses"
+    })
+    .eq("id", orderId);
+
+  if(error){
+
+    console.error(error);
+
+    alert(
+      "Gagal memproses pesanan."
+    );
+
+    return;
+  }
+
+  alert(
+    "Pesanan sekarang berstatus Diproses."
+  );
+
+  await muatPesananMasuk();
+}
+
+
+// ======================================
+// PENJUAL MENYERAHKAN KE KURIR
+// ======================================
+
+async function serahkanPesananKeKurir(orderId){
+
+  const konfirmasi =
+    confirm(
+      "Serahkan pesanan ini kepada jasa kurir?"
+    );
+
+  if(!konfirmasi){
+    return;
+  }
+
+  const { error } =
+    await supabaseClient
+    .from("Orders")
+    .update({
+      Status: "Diserahkan ke kurir"
+    })
+    .eq("id", orderId);
+
+  if(error){
+
+    console.error(error);
+
+    alert(
+      "Gagal menyerahkan pesanan ke kurir."
+    );
+
+    return;
+  }
+
+  alert(
+    "Pesanan telah diserahkan ke kurir."
+  );
+
+  await muatPesananMasuk();
+}
+
+
+// ======================================
+// BATALKAN PESANAN
+// HANYA SEBELUM DISERAHKAN KE KURIR
+// ======================================
+
+async function batalkanPesananPenjual(orderId){
+
+  const konfirmasi =
+    confirm(
+      "Batalkan pesanan ini?"
+    );
+
+  if(!konfirmasi){
+    return;
+  }
+
+  // Cek status terbaru sebelum membatalkan
+  const { data: order, error: cekError } =
+    await supabaseClient
+    .from("Orders")
+    .select("Status")
+    .eq("id", orderId)
+    .maybeSingle();
+
+  if(cekError){
+
+    console.error(cekError);
+
+    alert(
+      "Gagal memeriksa status pesanan."
+    );
+
+    return;
+  }
+
+  if(!order){
+    alert(
+      "Pesanan tidak ditemukan."
+    );
+    return;
+  }
+
+  const status =
+    String(order.Status || "")
+    .trim()
+    .toLowerCase();
+
+  if(
+    status !== "menunggu diproses" &&
+    status !== "menunggu" &&
+    status !== "diproses"
+  ){
+
+    alert(
+      "Pesanan tidak dapat dibatalkan karena sudah diserahkan kepada kurir atau sudah selesai."
+    );
+
+    await muatPesananMasuk();
+
+    return;
+  }
+
+  const { error } =
+    await supabaseClient
+    .from("Orders")
+    .update({
+      Status: "Dibatalkan"
+    })
+    .eq("id", orderId);
+
+  if(error){
+
+    console.error(error);
+
+    alert(
+      "Gagal membatalkan pesanan."
+    );
+
+    return;
+  }
+
+  alert(
+    "Pesanan telah dibatalkan."
+  );
+
+  await muatPesananMasuk();
+}
+
+
+// ======================================
+// HAPUS PESANAN
+// HANYA JIKA DIBATALKAN
+// ======================================
+
+async function hapusPesananPenjual(orderId){
+
+  const konfirmasi =
+    confirm(
+      "Hapus pesanan yang dibatalkan ini?"
+    );
+
+  if(!konfirmasi){
+    return;
+  }
+
+  // Pastikan status memang Dibatalkan
+  const { data: order, error: cekError } =
+    await supabaseClient
+    .from("Orders")
+    .select("Status")
+    .eq("id", orderId)
+    .maybeSingle();
+
+  if(cekError){
+
+    console.error(cekError);
+
+    alert(
+      "Gagal memeriksa pesanan."
+    );
+
+    return;
+  }
+
+  if(!order){
+
+    alert(
+      "Pesanan tidak ditemukan."
+    );
+
+    return;
+  }
+
+  if(
+    String(order.Status || "")
+      .trim()
+      .toLowerCase() !== "dibatalkan"
+  ){
+
+    alert(
+      "Pesanan hanya dapat dihapus jika statusnya Dibatalkan."
+    );
+
+    await muatPesananMasuk();
+
+    return;
+  }
+
+  const { error } =
+    await supabaseClient
+    .from("Orders")
+    .delete()
+    .eq("id", orderId);
+
+  if(error){
+
+    console.error(error);
+
+    alert(
+      "Gagal menghapus pesanan."
+    );
+
+    return;
+  }
+
+  alert(
+    "Pesanan telah dihapus."
+  );
+
+  await muatPesananMasuk();
+  }
+  
  function bukaToko(){
 
   if(!pengguna || !pengguna.id){
