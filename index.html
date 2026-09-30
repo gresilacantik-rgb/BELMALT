@@ -2082,7 +2082,7 @@ behavior:"smooth"
 /* =========================
    RIWAYAT PESANAN
 ========================= */
-
+  
 async function riwayatPesanan(){
 
   setNav("navAkun");
@@ -2127,13 +2127,12 @@ async function riwayatPesanan(){
     return;
   }
 
-  // Ambil pesanan milik pengguna
   const { data: daftarOrder, error } =
     await supabaseClient
       .from("Orders")
       .select("*")
       .eq("user_id", pengguna.id)
-      .order("id", { ascending:false });
+      .order("created_at", { ascending:false });
 
   if(error){
 
@@ -2191,17 +2190,186 @@ async function riwayatPesanan(){
     return;
   }
 
-  // Ambil detail pesanan
-  const orderIds =
+  box.innerHTML =
     daftarOrder.map(function(order){
-      return order.id;
-    });
 
+      const nomor =
+        order["Nomor-pesanan"] ||
+        order.id;
+
+      const status =
+        order.Status ||
+        "Menunggu diproses";
+
+      return `
+
+        <div
+          class="card"
+          onclick="detailPesanan('${order.id}')"
+          style="
+            cursor:pointer;
+            margin-bottom:15px;
+          "
+        >
+
+          <div style="
+            display:flex;
+            justify-content:space-between;
+            align-items:flex-start;
+            gap:10px;
+          ">
+
+            <strong>
+              📦 Pesanan #${nomor}
+            </strong>
+
+            <span class="order-status">
+              ${status}
+            </span>
+
+          </div>
+
+          <div style="
+            font-size:12px;
+            color:#777;
+            margin-top:10px;
+          ">
+
+            ${order.created_at
+              ? new Date(order.created_at)
+                  .toLocaleString("id-ID")
+              : ""}
+
+          </div>
+
+          <div style="
+            margin-top:12px;
+            color:#1261c9;
+            font-size:13px;
+            font-weight:bold;
+          ">
+
+            👆 Ketuk untuk melihat detail pesanan
+
+          </div>
+
+          <div style="
+            border-top:1px solid #eee;
+            margin-top:10px;
+            padding-top:10px;
+            display:flex;
+            justify-content:space-between;
+            font-weight:bold;
+          ">
+
+            <span>
+              Total
+            </span>
+
+            <span style="color:#1261c9">
+
+              ${rupiah(Number(order.Total || 0))}
+
+            </span>
+
+          </div>
+
+        </div>
+
+      `;
+
+    }).join("");
+
+}
+
+  async function detailPesanan(orderId){
+
+  document.getElementById("halaman").innerHTML = `
+
+    <div class="judul">
+      📦 Detail Pesanan
+    </div>
+
+    <div id="detailPesananBox">
+
+      <div class="card">
+        Memuat detail pesanan...
+      </div>
+
+    </div>
+
+  `;
+
+  const box =
+    document.getElementById("detailPesananBox");
+
+  if(!pengguna || !pengguna.id){
+
+    box.innerHTML = `
+
+      <div class="card kosong">
+
+        <div class="icon">
+          🔐
+        </div>
+
+        <p>
+          Silakan login terlebih dahulu.
+        </p>
+
+      </div>
+
+    `;
+
+    return;
+  }
+
+  // Ambil pesanan
+  const { data: order, error: orderError } =
+    await supabaseClient
+      .from("Orders")
+      .select("*")
+      .eq("id", orderId)
+      .eq("user_id", pengguna.id)
+      .single();
+
+  if(orderError || !order){
+
+    console.error(orderError);
+
+    box.innerHTML = `
+
+      <div class="card kosong">
+
+        <div class="icon">
+          ⚠️
+        </div>
+
+        <p>
+          Pesanan tidak ditemukan.
+        </p>
+
+        <button
+          class="checkout"
+          onclick="riwayatPesanan()">
+
+          Kembali ke Pesanan
+
+        </button>
+
+      </div>
+
+    `;
+
+    return;
+  }
+
+  // Ambil item pesanan
   const { data: detailOrder, error: itemError } =
     await supabaseClient
       .from("Order_items")
       .select("*")
-      .in("Order_id", orderIds);
+      .eq("Order_id", order.id);
 
   if(itemError){
 
@@ -2216,13 +2384,20 @@ async function riwayatPesanan(){
         </div>
 
         <p>
-          Pesanan ditemukan,
-          tetapi detail produk gagal dimuat.
+          Detail produk gagal dimuat.
         </p>
 
         <p style="font-size:12px;color:#777">
           ${itemError.message}
         </p>
+
+        <button
+          class="checkout"
+          onclick="riwayatPesanan()">
+
+          Kembali
+
+        </button>
 
       </div>
 
@@ -2231,7 +2406,7 @@ async function riwayatPesanan(){
     return;
   }
 
-  // Ambil ID produk
+  // Ambil produk
   const productIds =
     [...new Set(
       (detailOrder || []).map(function(item){
@@ -2264,129 +2439,425 @@ async function riwayatPesanan(){
     }
   }
 
-  box.innerHTML =
-    daftarOrder.map(function(order){
+  const nomor =
+    order["Nomor-pesanan"] ||
+    order.id;
 
-      const items =
-        (detailOrder || []).filter(function(item){
+  const status =
+    order.Status ||
+    "Menunggu diproses";
 
-          return item.Order_id === order.id;
+  // Hitung subtotal
+  let subtotal = 0;
 
-        });
+  (detailOrder || []).forEach(function(item){
 
-      return `
+    subtotal +=
+      Number(item.Jumlah || 0) *
+      Number(item.Harga || 0);
 
-        <div class="card">
+  });
 
-          <div style="
-            display:flex;
-            justify-content:space-between;
-            gap:10px;
-          ">
+  const ongkir =
+    Number(order.Ongkir || 0);
 
-            <strong>
-              Pesanan #${order.id}
-            </strong>
+  const total =
+    Number(order.Total || subtotal + ongkir);
 
-            <span class="order-status">
-              ${order.Status || "Menunggu diproses"}
-            </span>
+  // Status pesanan
+  let statusHTML = "";
 
-          </div>
+  if(status === "Dibatalkan"){
 
-          <div style="
-            font-size:12px;
-            color:#777;
-            margin-top:8px;
-          ">
+    statusHTML = `
 
-            ${order.created_at
-              ? new Date(order.created_at)
-                  .toLocaleString("id-ID")
-              : ""}
+      <div style="
+        padding:15px;
+        border-radius:12px;
+        background:#fdecec;
+        margin-top:15px;
+        font-weight:bold;
+        color:#d32f2f;
+        text-align:center;
+      ">
 
-          </div>
+        ❌ Pesanan Dibatalkan
 
-          <div style="margin-top:12px">
+      </div>
 
-            ${
-              items.length === 0
+    `;
 
-              ? `
+  }else{
+
+    const statusList = [
+      "Menunggu diproses",
+      "Diproses",
+      "Dikirim",
+      "Selesai"
+    ];
+
+    statusHTML = `
+
+      <div style="
+        margin-top:18px;
+      ">
+
+        <strong>
+          📈 Perkembangan Pesanan
+        </strong>
+
+        <div style="
+          margin-top:12px;
+        ">
+
+          ${
+            statusList.map(function(item){
+
+              const aktif =
+                statusList.indexOf(item) <=
+                statusList.indexOf(status);
+
+              return `
+
                 <div style="
-                  font-size:13px;
-                  color:#777;
+                  display:flex;
+                  align-items:center;
+                  gap:10px;
+                  margin:9px 0;
+                  font-size:14px;
+                  font-weight:${aktif ? "bold" : "normal"};
+                  color:${aktif ? "#1261c9" : "#999"};
                 ">
-                  Tidak ada detail produk.
+
+                  <span>
+                    ${aktif ? "●" : "○"}
+                  </span>
+
+                  <span>
+                    ${item}
+                  </span>
+
                 </div>
-              `
 
-              : items.map(function(item){
+              `;
 
-                  const product =
-                    produkMap[item.product_id];
-
-                  const namaProduk =
-                    product
-                    ? product.name
-                    : "Produk";
-
-                  const jumlah =
-                    Number(item.Jumlah || 0);
-
-                  const harga =
-                    Number(item.Harga || 0);
-
-                  return `
-
-                    <div style="
-                      display:flex;
-                      justify-content:space-between;
-                      font-size:13px;
-                      padding:5px 0;
-                    ">
-
-                      <span>
-                        ${namaProduk} x${jumlah}
-                      </span>
-
-                      <strong>
-                        ${rupiah(harga * jumlah)}
-                      </strong>
-
-                    </div>
-
-                  `;
-
-                }).join("")
-            }
-
-          </div>
-
-          <div style="
-            border-top:1px solid #eee;
-            margin-top:8px;
-            padding-top:10px;
-            display:flex;
-            justify-content:space-between;
-            font-weight:bold;
-          ">
-
-            <span>Total</span>
-
-            <span style="color:#1261c9">
-
-              ${rupiah(Number(order.Total || 0))}
-
-            </span>
-
-          </div>
+            }).join("")
+          }
 
         </div>
 
-      `;
+      </div>
 
-    }).join("");
+    `;
+
+  }
+
+  // Tombol batalkan hanya sebelum Dikirim
+  let tombolBatal = "";
+
+  if(
+    status === "Menunggu diproses" ||
+    status === "Diproses"
+  ){
+
+    tombolBatal = `
+
+      <button
+        class="checkout"
+        style="
+          background:#dc3545;
+          margin-top:10px;
+        "
+        onclick="batalkanPesanan('${order.id}')">
+
+        ❌ Batalkan Pesanan
+
+      </button>
+
+    `;
+
+  }
+
+  box.innerHTML = `
+
+    <div class="card">
+
+      <div style="
+        font-size:18px;
+        font-weight:bold;
+      ">
+
+        📦 Pesanan #${nomor}
+
+      </div>
+
+      <div style="
+        font-size:12px;
+        color:#777;
+        margin-top:8px;
+      ">
+
+        ${order.created_at
+          ? new Date(order.created_at)
+              .toLocaleString("id-ID")
+          : ""}
+
+      </div>
+
+      ${statusHTML}
+
+    </div>
+
+
+    <div class="card">
+
+      <h3>
+        🛍️ Produk yang Dibeli
+      </h3>
+
+      ${
+        !detailOrder || detailOrder.length === 0
+
+        ? `
+
+          <p style="color:#777">
+            Tidak ada produk.
+          </p>
+
+        `
+
+        : detailOrder.map(function(item){
+
+            const product =
+              produkMap[item.product_id];
+
+            const namaProduk =
+              product
+              ? product.name
+              : "Produk";
+
+            const jumlah =
+              Number(item.Jumlah || 0);
+
+            const harga =
+              Number(item.Harga || 0);
+
+            const subtotalItem =
+              jumlah * harga;
+
+            return `
+
+              <div style="
+                padding:12px 0;
+                border-bottom:1px solid #eee;
+              ">
+
+                <div style="
+                  display:flex;
+                  justify-content:space-between;
+                  gap:10px;
+                ">
+
+                  <strong>
+                    ${namaProduk}
+                  </strong>
+
+                  <strong>
+                    ${rupiah(subtotalItem)}
+                  </strong>
+
+                </div>
+
+                <div style="
+                  margin-top:6px;
+                  font-size:13px;
+                  color:#666;
+                ">
+
+                  🔢 Jumlah: ${jumlah}
+
+                </div>
+
+                <div style="
+                  margin-top:4px;
+                  font-size:13px;
+                  color:#666;
+                ">
+
+                  💰 Harga satuan:
+                  ${rupiah(harga)}
+
+                </div>
+
+              </div>
+
+            `;
+
+          }).join("")
+      }
+
+      <div style="
+        margin-top:15px;
+        display:flex;
+        justify-content:space-between;
+        font-weight:bold;
+      ">
+
+        <span>
+          💵 Subtotal
+        </span>
+
+        <span>
+          ${rupiah(subtotal)}
+        </span>
+
+      </div>
+
+      <div style="
+        margin-top:8px;
+        display:flex;
+        justify-content:space-between;
+      ">
+
+        <span>
+          🚚 Ongkir
+        </span>
+
+        <span>
+          ${rupiah(ongkir)}
+        </span>
+
+      </div>
+
+      <div style="
+        border-top:1px solid #ddd;
+        margin-top:12px;
+        padding-top:12px;
+        display:flex;
+        justify-content:space-between;
+        font-size:18px;
+        font-weight:bold;
+      ">
+
+        <span>
+          💰 Total Pembayaran
+        </span>
+
+        <span style="color:#1261c9">
+          ${rupiah(total)}
+        </span>
+
+      </div>
+
+    </div>
+
+
+    <div class="card">
+
+      <h3>
+        💳 Informasi Pembayaran
+      </h3>
+
+      <p style="margin-top:10px">
+
+        💳 Metode pembayaran:
+        <strong>
+          ${order["Metode-pembayaran"] || "-"}
+        </strong>
+
+      </p>
+
+    </div>
+
+
+    <div class="card">
+
+      <h3>
+        📍 Alamat Pengiriman
+      </h3>
+
+      <p style="
+        margin-top:10px;
+        line-height:1.5;
+      ">
+
+        ${order.Alamat || "-"}
+
+      </p>
+
+    </div>
+
+
+    <div class="card">
+
+      ${tombolBatal}
+
+      <button
+        class="checkout secondary"
+        onclick="riwayatPesanan()">
+
+        ← Kembali ke Pesanan
+
+      </button>
+
+    </div>
+
+  `;
+
+  window.scrollTo({
+    top:0,
+    behavior:"smooth"
+  });
+
+}
+
+  async function batalkanPesanan(orderId){
+
+  const yakin =
+    confirm(
+      "Apakah Anda yakin ingin membatalkan pesanan ini?"
+    );
+
+  if(!yakin){
+    return;
+  }
+
+  const { data, error } =
+    await supabaseClient
+      .rpc(
+        "cancel_order",
+        {
+          p_order_id: orderId
+        }
+      );
+
+  if(error){
+
+    console.error(error);
+
+    pesan(
+      "Pesanan gagal dibatalkan: " +
+      error.message
+    );
+
+    return;
+  }
+
+  if(data !== true){
+
+    pesan(
+      "Pesanan tidak dapat dibatalkan. " +
+      "Pesanan mungkin sudah dikirim atau selesai."
+    );
+
+    return;
+  }
+
+  pesan(
+    "Pesanan berhasil dibatalkan"
+  );
+
+  detailPesanan(orderId);
 
 }
   
