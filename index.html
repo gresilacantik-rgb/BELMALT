@@ -4356,30 +4356,44 @@ const path =
 // ======================================
 
 async function prosesPesananPenjual(orderId){
+async function prosesPesananPenjual(orderId){
 
   const konfirmasi =
-    confirm(
-      "Proses pesanan ini?"
-    );
+    confirm("Proses pesanan ini?");
 
   if(!konfirmasi){
     return;
   }
 
-  const { error } =
+  const { data, error } =
     await supabaseClient
     .from("Orders")
     .update({
       Status: "Diproses"
     })
-    .eq("id", orderId);
+    .eq("id", orderId)
+    .select("id, Status");
 
   if(error){
 
-    console.error(error);
+    console.error(
+      "ERROR PROSES PESANAN:",
+      error
+    );
 
     alert(
-      "Gagal memproses pesanan."
+      "Gagal memproses pesanan:\n" +
+      error.message
+    );
+
+    return;
+  }
+
+  if(!data || data.length === 0){
+
+    alert(
+      "Pesanan tidak berubah.\n\n" +
+      "Database tidak menemukan pesanan yang dapat diperbarui."
     );
 
     return;
@@ -4390,7 +4404,7 @@ async function prosesPesananPenjual(orderId){
   );
 
   await muatPesananMasuk();
-}
+  }
 
 
 // ======================================
@@ -4408,20 +4422,35 @@ async function serahkanPesananKeKurir(orderId){
     return;
   }
 
-  const { error } =
+  const { data, error } =
     await supabaseClient
     .from("Orders")
     .update({
       Status: "Diserahkan ke kurir"
     })
-    .eq("id", orderId);
+    .eq("id", orderId)
+    .select("id, Status");
 
   if(error){
 
-    console.error(error);
+    console.error(
+      "ERROR SERAHKAN KE KURIR:",
+      error
+    );
 
     alert(
-      "Gagal menyerahkan pesanan ke kurir."
+      "Gagal menyerahkan pesanan:\n" +
+      error.message
+    );
+
+    return;
+  }
+
+  if(!data || data.length === 0){
+
+    alert(
+      "Status pesanan tidak berubah.\n\n" +
+      "Database tidak menemukan pesanan yang dapat diperbarui."
     );
 
     return;
@@ -4443,37 +4472,41 @@ async function serahkanPesananKeKurir(orderId){
 async function batalkanPesananPenjual(orderId){
 
   const konfirmasi =
-    confirm(
-      "Batalkan pesanan ini?"
-    );
+    confirm("Batalkan pesanan ini?");
 
   if(!konfirmasi){
     return;
   }
 
-  // Cek status terbaru sebelum membatalkan
+  // Periksa status terbaru
   const { data: order, error: cekError } =
     await supabaseClient
     .from("Orders")
-    .select("Status")
+    .select("id, Status")
     .eq("id", orderId)
     .maybeSingle();
 
   if(cekError){
 
-    console.error(cekError);
+    console.error(
+      "ERROR CEK PESANAN:",
+      cekError
+    );
 
     alert(
-      "Gagal memeriksa status pesanan."
+      "Gagal memeriksa pesanan:\n" +
+      cekError.message
     );
 
     return;
   }
 
   if(!order){
+
     alert(
       "Pesanan tidak ditemukan."
     );
+
     return;
   }
 
@@ -4497,20 +4530,35 @@ async function batalkanPesananPenjual(orderId){
     return;
   }
 
-  const { error } =
+  const { data, error } =
     await supabaseClient
     .from("Orders")
     .update({
       Status: "Dibatalkan"
     })
-    .eq("id", orderId);
+    .eq("id", orderId)
+    .select("id, Status");
 
   if(error){
 
-    console.error(error);
+    console.error(
+      "ERROR BATALKAN PESANAN:",
+      error
+    );
 
     alert(
-      "Gagal membatalkan pesanan."
+      "Gagal membatalkan pesanan:\n" +
+      error.message
+    );
+
+    return;
+  }
+
+  if(!data || data.length === 0){
+
+    alert(
+      "Pesanan tidak berubah.\n\n" +
+      "Database tidak mengizinkan perubahan pesanan."
     );
 
     return;
@@ -4540,20 +4588,24 @@ async function hapusPesananPenjual(orderId){
     return;
   }
 
-  // Pastikan status memang Dibatalkan
+  // Pastikan status masih Dibatalkan
   const { data: order, error: cekError } =
     await supabaseClient
     .from("Orders")
-    .select("Status")
+    .select("id, Status")
     .eq("id", orderId)
     .maybeSingle();
 
   if(cekError){
 
-    console.error(cekError);
+    console.error(
+      "ERROR CEK HAPUS:",
+      cekError
+    );
 
     alert(
-      "Gagal memeriksa pesanan."
+      "Gagal memeriksa pesanan:\n" +
+      cekError.message
     );
 
     return;
@@ -4564,6 +4616,8 @@ async function hapusPesananPenjual(orderId){
     alert(
       "Pesanan tidak ditemukan."
     );
+
+    await muatPesananMasuk();
 
     return;
   }
@@ -4583,18 +4637,33 @@ async function hapusPesananPenjual(orderId){
     return;
   }
 
-  const { error } =
+  const { data, error } =
     await supabaseClient
     .from("Orders")
     .delete()
-    .eq("id", orderId);
+    .eq("id", orderId)
+    .select("id");
 
   if(error){
 
-    console.error(error);
+    console.error(
+      "ERROR HAPUS PESANAN:",
+      error
+    );
 
     alert(
-      "Gagal menghapus pesanan."
+      "Gagal menghapus pesanan:\n" +
+      error.message
+    );
+
+    return;
+  }
+
+  if(!data || data.length === 0){
+
+    alert(
+      "Pesanan tidak terhapus.\n\n" +
+      "Database tidak mengizinkan penghapusan pesanan."
     );
 
     return;
