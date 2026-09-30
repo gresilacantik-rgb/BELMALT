@@ -3609,7 +3609,7 @@ async function simpanToko(){
 }
   
 function tambahProduk(){
-  
+
   document.getElementById("halaman").innerHTML=`
 
   <div class="judul">
@@ -3646,65 +3646,100 @@ function tambahProduk(){
 
     <div class="form-group">
       <label>Kategori</label>
+
       <select id="produkKategori">
-        <option value="">Pilih kategori</option>
-        <option value="Fashion">Fashion</option>
-        <option value="Kecantikan">Kecantikan</option>
-        <option value="Makanan">Makanan</option>
-        <option value="Elektronik">Elektronik</option>
-        <option value="Rumah">Rumah</option>
-        <option value="Lainnya">Lainnya</option>
+
+        <option value="">
+          Pilih kategori
+        </option>
+
+        <option value="Fashion">
+          Fashion
+        </option>
+
+        <option value="Kecantikan">
+          Kecantikan
+        </option>
+
+        <option value="Makanan">
+          Makanan
+        </option>
+
+        <option value="Elektronik">
+          Elektronik
+        </option>
+
+        <option value="Rumah">
+          Rumah Tangga
+        </option>
+
+        <option value="Aksesoris">
+          Aksesoris
+        </option>
+
+        <option value="Jasa">
+          Jasa
+        </option>
+
+        <option value="Lainnya">
+          Lainnya
+        </option>
+
       </select>
+
     </div>
 
     <div class="form-group">
       <label>Lokasi</label>
+
       <input
         id="produkLokasi"
         type="text"
         placeholder="Contoh: Ternate">
+
     </div>
 
     <div class="form-group">
       <label>Deskripsi</label>
+
       <textarea
         id="produkDeskripsi"
-        placeholder="Jelaskan produk kamu"></textarea>
+        placeholder="Jelaskan produk kamu">
+      </textarea>
+
     </div>
 
     <div class="form-group">
-      <label>Foto Produk</label>
 
-      <div class="form-group">
+      <label>📷 Foto Produk</label>
 
-  <label>📷 Foto Produk</label>
+      <input
+        id="produkGambar"
+        type="file"
+        accept="image/*"
+        onchange="previewFotoProduk(event)"
+        style="display:none;">
 
-  <input
-    id="produkGambar"
-    type="file"
-    accept="image/*"
-    onchange="previewFotoProduk(event)"
-    style="display:none;">
+      <button
+        type="button"
+        class="checkout"
+        onclick="document.getElementById('produkGambar').click()">
 
-  <button
-    type="button"
-    class="checkout"
-    onclick="document.getElementById('produkGambar').click()">
+        📷 Pilih Foto dari Galeri
 
-    📷 Pilih Foto dari Galeri
+      </button>
 
-  </button>
-
-  <div
-    id="previewFoto"
-    style="margin-top:10px;text-align:center;">
-  </div>
-
-</div>
+      <div
+        id="previewFoto"
+        style="
+          margin-top:10px;
+          text-align:center;">
+      </div>
 
       <small>
         Pilih foto produk dari Galeri HP
       </small>
+
     </div>
 
     <button
@@ -3718,12 +3753,12 @@ function tambahProduk(){
     <button
       onclick="tokoSaya()"
       style="
-      width:100%;
-      margin-top:10px;
-      padding:12px;
-      border:1px solid #ddd;
-      border-radius:8px;
-      background:white">
+        width:100%;
+        margin-top:10px;
+        padding:12px;
+        border:1px solid #ddd;
+        border-radius:8px;
+        background:white">
 
       ← Kembali
 
@@ -3739,39 +3774,25 @@ function previewFotoProduk(event){
 
   const file = event.target.files[0];
 
-  if(!file){
+  const preview =
+    document.getElementById("previewFoto");
+
+  if(!file || !preview){
     return;
   }
 
+  // Pastikan file berupa gambar
   if(!file.type.startsWith("image/")){
-    pesan("File yang dipilih harus berupa foto");
-    return;
-  }
 
-  const reader = new FileReader();
+    pesan(
+      "File yang dipilih harus berupa foto"
+    );
 
-  reader.onload = function(e){
+    event.target.value = "";
 
-    document.getElementById("previewFoto").innerHTML = `
+    preview.innerHTML = "";
 
-      <img
-        src="${e.target.result}"
-        style="
-          width:150px;
-          height:150px;
-          object-fit:cover;
-          border-radius:12px;
-          border:1px solid #ddd;">
-
-      <p style="font-size:12px;color:#777;">
-        Foto berhasil dipilih
-      </p>
-
-    `;
-
-  };
-
-  reader.readAsDataURL(file);
+    
 
 }
 
@@ -3791,14 +3812,26 @@ async function simpanProduk(){
       .maybeSingle();
 
   if(tokoError){
+
     console.error(tokoError);
-    pesan("Gagal mencari toko: " + tokoError.message);
+
+    pesan(
+      "Gagal mencari toko: " +
+      tokoError.message
+    );
+
     return;
   }
 
   if(!toko){
-    pesan("Kamu belum memiliki toko. Silakan buka toko terlebih dahulu.");
+
+    pesan(
+      "Kamu belum memiliki toko. " +
+      "Silakan buka toko terlebih dahulu."
+    );
+
     tokoSaya();
+
     return;
   }
 
@@ -3807,10 +3840,14 @@ async function simpanProduk(){
     document.getElementById("produkNama").value.trim();
 
   const harga =
-    Number(document.getElementById("produkHarga").value);
+    Number(
+      document.getElementById("produkHarga").value
+    );
 
   const stok =
-    Number(document.getElementById("produkStok").value);
+    Number(
+      document.getElementById("produkStok").value
+    );
 
   const kategori =
     document.getElementById("produkKategori").value;
@@ -3825,107 +3862,200 @@ async function simpanProduk(){
     document.getElementById("produkGambar");
 
   const file =
-    fileInput.files[0];
+    fileInput ? fileInput.files[0] : null;
 
-  // Validasi
+
+  // Validasi nama
   if(!nama){
+
     pesan("Nama produk wajib diisi");
+
     return;
   }
 
+
+  // Validasi harga
   if(!harga || harga < 1){
+
     pesan("Masukkan harga yang benar");
+
     return;
   }
 
+
+  // Validasi stok
   if(stok < 0){
+
     pesan("Stok tidak boleh negatif");
+
     return;
   }
 
+
+  // Validasi kategori
   if(!kategori){
+
     pesan("Pilih kategori produk");
+
     return;
   }
 
+
+  // Validasi foto
   if(!file){
-    pesan("Silakan pilih foto produk dari Galeri");
+
+    pesan(
+      "Silakan pilih foto produk dari Galeri"
+    );
+
     return;
   }
 
-  // Pastikan file adalah gambar
+
+  // Pastikan file gambar
   if(!file.type.startsWith("image/")){
-    pesan("File yang dipilih harus berupa gambar");
+
+    pesan(
+      "File yang dipilih harus berupa gambar"
+    );
+
     return;
   }
 
-  // Nama file unik
+
+  // Maksimal 5 MB
+  if(file.size > 5 * 1024 * 1024){
+
+    pesan(
+      "Ukuran foto maksimal 5 MB"
+    );
+
+    return;
+  }
+
+
+  // Buat nama file unik
   const namaFile =
-    pengguna.id + "_" +
-    Date.now() + "_" +
-    file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
+    pengguna.id +
+    "_" +
+    Date.now() +
+    "_" +
+    file.name.replace(
+      /[^a-zA-Z0-9.-]/g,
+      "_"
+    );
 
   const path =
     namaFile;
+
 
   // Upload foto ke Supabase Storage
   const { error: uploadError } =
     await supabaseClient
       .storage
-      .from("product-images")
-      .upload(path, file, {
-        cacheControl: "3600",
-        upsert: false
-      });
+      .from("product_images")
+      .upload(
+        path,
+        file,
+        {
+          cacheControl: "3600",
+          upsert: false
+        }
+      );
+
 
   if(uploadError){
 
-    console.error(uploadError);
+    console.error(
+      "Upload foto produk gagal:",
+      uploadError
+    );
 
-    pesan("Foto gagal diupload: " + uploadError.message);
+    pesan(
+      "Foto gagal diupload: " +
+      uploadError.message
+    );
 
     return;
   }
+
 
   // Ambil URL foto
   const { data: publicUrlData } =
     supabaseClient
       .storage
-      .from("product-images")
+      .from("product_images")
       .getPublicUrl(path);
+
+
+  if(
+    !publicUrlData ||
+    !publicUrlData.publicUrl
+  ){
+
+    pesan(
+      "URL foto produk tidak berhasil dibuat"
+    );
+
+    return;
+  }
+
 
   const gambar =
     publicUrlData.publicUrl;
+
 
   // Simpan produk ke database
   const { data, error } =
     await supabaseClient
       .from("products")
       .insert({
+
         name: nama,
+
         price: harga,
+
         stock: stok,
+
         category: kategori,
+
         location: lokasi,
+
         description: deskripsi,
+
         image_url: gambar,
+
         active: true,
+
         seller_id: pengguna.id,
+
         shop_id: toko.id
+
       })
       .select()
       .single();
 
+
   if(error){
 
-    console.error(error);
+    console.error(
+      "Gagal menyimpan produk:",
+      error
+    );
 
-    pesan("Produk gagal disimpan: " + error.message);
+    pesan(
+      "Produk gagal disimpan: " +
+      error.message
+    );
 
     return;
   }
 
-  pesan("Produk berhasil ditambahkan 🎉");
+
+  pesan(
+    "Produk berhasil ditambahkan 🎉"
+  );
+
 
   tokoSaya();
 
