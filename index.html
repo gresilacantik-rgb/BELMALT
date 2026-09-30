@@ -2068,129 +2068,313 @@ behavior:"smooth"
    RIWAYAT PESANAN
 ========================= */
 
-function riwayatPesanan(){
+async function riwayatPesanan(){
 
-setNav("navAkun");
+  setNav("navAkun");
 
-document.getElementById("halaman").innerHTML=`
+  document.getElementById("halaman").innerHTML = `
 
-<div class="judul">
-📦 Pesanan Saya
-</div>
+    <div class="judul">
+      📦 Pesanan Saya
+    </div>
 
-<div id="daftarPesanan"></div>
+    <div id="daftarPesanan">
 
-`;
+      <div class="card">
+        Memuat pesanan...
+      </div>
 
-const box=
-document.getElementById("daftarPesanan");
+    </div>
 
-if(pesanan.length===0){
+  `;
 
-box.innerHTML=`
+  const box =
+    document.getElementById("daftarPesanan");
 
-<div class="card kosong">
+  if(!pengguna || !pengguna.id){
 
-<div class="icon">
-📦
-</div>
+    box.innerHTML = `
 
-<p>
-Belum ada pesanan.
-</p>
+      <div class="card kosong">
 
-<button class="checkout"
-onclick="beranda()">
+        <div class="icon">
+          🔐
+        </div>
 
-Mulai Belanja
+        <p>
+          Silakan login terlebih dahulu.
+        </p>
 
-</button>
+      </div>
 
-</div>
+    `;
 
-`;
+    return;
+  }
 
-return;
+  // Ambil pesanan milik pengguna
+  const { data: daftarOrder, error } =
+    await supabaseClient
+      .from("Orders")
+      .select("*")
+      .eq("user_id", pengguna.id)
+      .order("id", { ascending:false });
+
+  if(error){
+
+    console.error(error);
+
+    box.innerHTML = `
+
+      <div class="card kosong">
+
+        <div class="icon">
+          ⚠️
+        </div>
+
+        <p>
+          Gagal memuat pesanan.
+        </p>
+
+        <p style="font-size:12px;color:#777">
+          ${error.message}
+        </p>
+
+      </div>
+
+    `;
+
+    return;
+  }
+
+  if(!daftarOrder || daftarOrder.length === 0){
+
+    box.innerHTML = `
+
+      <div class="card kosong">
+
+        <div class="icon">
+          📦
+        </div>
+
+        <p>
+          Belum ada pesanan.
+        </p>
+
+        <button
+          class="checkout"
+          onclick="beranda()">
+
+          Mulai Belanja
+
+        </button>
+
+      </div>
+
+    `;
+
+    return;
+  }
+
+  // Ambil detail pesanan
+  const orderIds =
+    daftarOrder.map(function(order){
+      return order.id;
+    });
+
+  const { data: detailOrder, error: itemError } =
+    await supabaseClient
+      .from("Order_items")
+      .select("*")
+      .in("Order_id", orderIds);
+
+  if(itemError){
+
+    console.error(itemError);
+
+    box.innerHTML = `
+
+      <div class="card kosong">
+
+        <div class="icon">
+          ⚠️
+        </div>
+
+        <p>
+          Pesanan ditemukan,
+          tetapi detail produk gagal dimuat.
+        </p>
+
+        <p style="font-size:12px;color:#777">
+          ${itemError.message}
+        </p>
+
+      </div>
+
+    `;
+
+    return;
+  }
+
+  // Ambil ID produk
+  const productIds =
+    [...new Set(
+      (detailOrder || []).map(function(item){
+        return item.product_id;
+      })
+    )];
+
+  let produkMap = {};
+
+  if(productIds.length > 0){
+
+    const { data: daftarProduk, error: productError } =
+      await supabaseClient
+        .from("products")
+        .select("*")
+        .in("id", productIds);
+
+    if(productError){
+
+      console.error(productError);
+
+    }else{
+
+      (daftarProduk || []).forEach(function(product){
+
+        produkMap[product.id] = product;
+
+      });
+
+    }
+  }
+
+  box.innerHTML =
+    daftarOrder.map(function(order){
+
+      const items =
+        (detailOrder || []).filter(function(item){
+
+          return item.Order_id === order.id;
+
+        });
+
+      return `
+
+        <div class="card">
+
+          <div style="
+            display:flex;
+            justify-content:space-between;
+            gap:10px;
+          ">
+
+            <strong>
+              Pesanan #${order.id}
+            </strong>
+
+            <span class="order-status">
+              ${order.Status || "Menunggu diproses"}
+            </span>
+
+          </div>
+
+          <div style="
+            font-size:12px;
+            color:#777;
+            margin-top:8px;
+          ">
+
+            ${order.created_at
+              ? new Date(order.created_at)
+                  .toLocaleString("id-ID")
+              : ""}
+
+          </div>
+
+          <div style="margin-top:12px">
+
+            ${
+              items.length === 0
+
+              ? `
+                <div style="
+                  font-size:13px;
+                  color:#777;
+                ">
+                  Tidak ada detail produk.
+                </div>
+              `
+
+              : items.map(function(item){
+
+                  const product =
+                    produkMap[item.product_id];
+
+                  const namaProduk =
+                    product
+                    ? product.name
+                    : "Produk";
+
+                  const jumlah =
+                    Number(item.Jumlah || 0);
+
+                  const harga =
+                    Number(item.Harga || 0);
+
+                  return `
+
+                    <div style="
+                      display:flex;
+                      justify-content:space-between;
+                      font-size:13px;
+                      padding:5px 0;
+                    ">
+
+                      <span>
+                        ${namaProduk} x${jumlah}
+                      </span>
+
+                      <strong>
+                        ${rupiah(harga * jumlah)}
+                      </strong>
+
+                    </div>
+
+                  `;
+
+                }).join("")
+            }
+
+          </div>
+
+          <div style="
+            border-top:1px solid #eee;
+            margin-top:8px;
+            padding-top:10px;
+            display:flex;
+            justify-content:space-between;
+            font-weight:bold;
+          ">
+
+            <span>Total</span>
+
+            <span style="color:#1261c9">
+
+              ${rupiah(Number(order.Total || 0))}
+
+            </span>
+
+          </div>
+
+        </div>
+
+      `;
+
+    }).join("");
 
 }
-
-box.innerHTML=
-pesanan.map(function(order){
-
-return `
-
-<div class="card">
-
-<div style="display:flex;justify-content:space-between;gap:10px">
-
-<strong>
-${order.nomorPesanan}
-</strong>
-
-<span class="order-status">
-${order.status}
-</span>
-
-</div>
-
-<div style="font-size:12px;color:#777;margin-top:8px">
-${order.tanggal}
-</div>
-
-<div style="margin-top:12px">
-
-${order.produk.map(function(item){
-
-return `
-
-<div style="
-display:flex;
-justify-content:space-between;
-font-size:13px;
-padding:5px 0;
-">
-
-<span>
-${item.nama} x${item.jumlah}
-</span>
-
-<strong>
-${rupiah(item.harga*item.jumlah)}
-</strong>
-
-</div>
-
-`;
-
-}).join("")}
-
-</div>
-
-<div style="
-border-top:1px solid #eee;
-margin-top:8px;
-padding-top:10px;
-display:flex;
-justify-content:space-between;
-font-weight:bold;
-">
-
-<span>Total</span>
-
-<span style="color:#1261c9">
-${rupiah(order.total)}
-</span>
-
-</div>
-
-</div>
-
-`;
-
-}).join("");
-
-}
-
+  
 
 /* =========================
    CHAT
