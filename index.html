@@ -3792,7 +3792,52 @@ function previewFotoProduk(event){
 
     preview.innerHTML = "";
 
-    
+    return;
+  }
+
+  // Maksimal 5 MB
+  if(file.size > 5 * 1024 * 1024){
+
+    pesan(
+      "Ukuran foto maksimal 5 MB"
+    );
+
+    event.target.value = "";
+
+    preview.innerHTML = "";
+
+    return;
+  }
+
+  const reader = new FileReader();
+
+  reader.onload = function(e){
+
+    preview.innerHTML = `
+
+      <img
+        src="${e.target.result}"
+        alt="Preview foto produk"
+        style="
+          width:150px;
+          height:150px;
+          object-fit:cover;
+          border-radius:12px;
+          border:1px solid #ddd;">
+
+      <p style="
+        font-size:12px;
+        color:#777;">
+
+        Foto berhasil dipilih
+
+      </p>
+
+    `;
+
+  };
+
+  reader.readAsDataURL(file);
 
 }
 
@@ -3803,7 +3848,6 @@ async function simpanProduk(){
     return;
   }
 
-  // Cari toko milik pengguna
   const { data: toko, error: tokoError } =
     await supabaseClient
       .from("shops")
@@ -3835,7 +3879,6 @@ async function simpanProduk(){
     return;
   }
 
-  // Ambil data form
   const nama =
     document.getElementById("produkNama").value.trim();
 
@@ -3864,8 +3907,6 @@ async function simpanProduk(){
   const file =
     fileInput ? fileInput.files[0] : null;
 
-
-  // Validasi nama
   if(!nama){
 
     pesan("Nama produk wajib diisi");
@@ -3873,8 +3914,6 @@ async function simpanProduk(){
     return;
   }
 
-
-  // Validasi harga
   if(!harga || harga < 1){
 
     pesan("Masukkan harga yang benar");
@@ -3882,8 +3921,6 @@ async function simpanProduk(){
     return;
   }
 
-
-  // Validasi stok
   if(stok < 0){
 
     pesan("Stok tidak boleh negatif");
@@ -3891,8 +3928,6 @@ async function simpanProduk(){
     return;
   }
 
-
-  // Validasi kategori
   if(!kategori){
 
     pesan("Pilih kategori produk");
@@ -3900,8 +3935,6 @@ async function simpanProduk(){
     return;
   }
 
-
-  // Validasi foto
   if(!file){
 
     pesan(
@@ -3911,8 +3944,6 @@ async function simpanProduk(){
     return;
   }
 
-
-  // Pastikan file gambar
   if(!file.type.startsWith("image/")){
 
     pesan(
@@ -3922,8 +3953,6 @@ async function simpanProduk(){
     return;
   }
 
-
-  // Maksimal 5 MB
   if(file.size > 5 * 1024 * 1024){
 
     pesan(
@@ -3933,8 +3962,6 @@ async function simpanProduk(){
     return;
   }
 
-
-  // Buat nama file unik
   const namaFile =
     pengguna.id +
     "_" +
@@ -3948,8 +3975,6 @@ async function simpanProduk(){
   const path =
     namaFile;
 
-
-  // Upload foto ke Supabase Storage
   const { error: uploadError } =
     await supabaseClient
       .storage
@@ -3962,7 +3987,6 @@ async function simpanProduk(){
           upsert: false
         }
       );
-
 
   if(uploadError){
 
@@ -3979,14 +4003,11 @@ async function simpanProduk(){
     return;
   }
 
-
-  // Ambil URL foto
   const { data: publicUrlData } =
     supabaseClient
       .storage
       .from("product_images")
       .getPublicUrl(path);
-
 
   if(
     !publicUrlData ||
@@ -4000,13 +4021,10 @@ async function simpanProduk(){
     return;
   }
 
-
   const gambar =
     publicUrlData.publicUrl;
 
-
-  // Simpan produk ke database
-  const { data, error } =
+  const { error } =
     await supabaseClient
       .from("products")
       .insert({
@@ -4035,7 +4053,6 @@ async function simpanProduk(){
       .select()
       .single();
 
-
   if(error){
 
     console.error(
@@ -4051,17 +4068,15 @@ async function simpanProduk(){
     return;
   }
 
-
   pesan(
     "Produk berhasil ditambahkan 🎉"
   );
 
-
   tokoSaya();
 
 }
-
-async function muatProdukSaya(){
+  
+    async function muatProdukSaya(){
 
   const wadah =
     document.getElementById("produkSaya");
