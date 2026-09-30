@@ -1796,8 +1796,7 @@ rupiah(total+ongkir);
 ========================= */
 
 async function buatPesanan(){
-  
-  console.log("TOMBOL BUAT PESANAN DIKLIK");
+async function buatPesanan(){
 
   if(!pengguna || !pengguna.id){
     pesan("Silakan login terlebih dahulu");
@@ -1805,20 +1804,16 @@ async function buatPesanan(){
   }
 
   const nama =
-    document.getElementById("namaPenerima")
-    .value.trim();
+    document.getElementById("namaPenerima").value.trim();
 
   const nomor =
-    document.getElementById("nomorHP")
-    .value.trim();
+    document.getElementById("nomorHP").value.trim();
 
   const alamat =
-    document.getElementById("alamat")
-    .value.trim();
+    document.getElementById("alamat").value.trim();
 
   const kota =
-    document.getElementById("kota")
-    .value;
+    document.getElementById("kota").value;
 
   if(nama.length < 3){
     pesan("Masukkan nama penerima");
@@ -1898,16 +1893,33 @@ async function buatPesanan(){
     ", " +
     kota;
 
-  // Simpan pesanan utama ke Supabase
+  // Nomor pesanan dibuat sebelum disimpan
+  const nomorPesanan =
+    "BM" +
+    Date.now()
+    .toString()
+    .slice(-8);
+
+  // Simpan pesanan utama
   const { data: pesananBaru, error: orderError } =
     await supabaseClient
     .from("Orders")
     .insert({
+
+      "Nomor-pesanan": nomorPesanan,
+
       Total: total,
+
+      Ongkir: ongkir,
+
       Status: "Menunggu diproses",
+
       "Metode-pembayaran": pembayaran,
+
       Alamat: alamatLengkap,
+
       user_id: pengguna.id
+
     })
     .select()
     .single();
@@ -1924,19 +1936,25 @@ async function buatPesanan(){
     return;
   }
 
-  // Simpan semua produk yang dibeli
+  // Siapkan detail produk
   const itemPesanan =
     keranjang.map(function(item){
 
       return {
+
         Order_id: pesananBaru.id,
+
         product_id: item.id,
+
         Jumlah: Number(item.jumlah),
+
         Harga: Number(item.harga)
+
       };
 
     });
 
+  // Simpan detail produk
   const { error: itemError } =
     await supabaseClient
     .from("Order_items")
@@ -1954,30 +1972,30 @@ async function buatPesanan(){
     return;
   }
 
-  // Tetap buat nomor pesanan untuk tampilan aplikasi
-  const nomorPesanan =
-    "BM" +
-    Date.now()
-    .toString()
-    .slice(-8);
-
+  // Data lokal untuk tampilan langsung
   const dataPesanan = {
 
     id: pesananBaru.id,
 
-    nomorPesanan,
+    nomorPesanan: nomorPesanan,
 
-    nama,
-    nomor,
-    alamat,
-    kota,
+    nama: nama,
 
-    pengiriman,
-    pembayaran,
+    nomor: nomor,
 
-    subtotal,
-    ongkir,
-    total,
+    alamat: alamat,
+
+    kota: kota,
+
+    pengiriman: pengiriman,
+
+    pembayaran: pembayaran,
+
+    subtotal: subtotal,
+
+    ongkir: ongkir,
+
+    total: total,
 
     produk: [...keranjang],
 
@@ -1989,7 +2007,6 @@ async function buatPesanan(){
 
   };
 
-  // Simpan juga ke data lokal aplikasi
   pesanan.unshift(dataPesanan);
 
   simpanPesanan();
@@ -2001,7 +2018,6 @@ async function buatPesanan(){
   tampilkanPesananBerhasil(dataPesanan);
 
 }
-
 
 function tampilkanPesananBerhasil(data){
 
