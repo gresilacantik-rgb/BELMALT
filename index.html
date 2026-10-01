@@ -1118,7 +1118,7 @@ function tambahKeranjang(id){
 
     });
 
-  if(!produk) {
+  if(!produk){
 
     pesan("Produk tidak ditemukan");
 
@@ -1165,7 +1165,7 @@ function tambahKeranjang(id){
 
       icon: produk.icon || "📦",
 
-      gambar: produk.gambar || "",
+      image_url: produk.image_url || produk.gambar || "",
 
       jumlah: 1
 
@@ -1179,7 +1179,7 @@ function tambahKeranjang(id){
     produk.nama + " masuk keranjang 🛒"
   );
 
-}
+  }
 
 
 /* =========================
@@ -1289,166 +1289,183 @@ behavior:"smooth"
 
 function tampilkanKeranjang(){
 
-const box=
-document.getElementById("isiKeranjang");
+  const box =
+    document.getElementById("isiKeranjang");
 
-if(!box) return;
+  if(!box) return;
 
-if(keranjang.length===0){
+  if(keranjang.length === 0){
 
-box.innerHTML=`
+    box.innerHTML = `
 
-<div class="card kosong">
+      <div class="card kosong">
 
-<div class="icon">🛒</div>
+        <div class="icon">🛒</div>
 
-<p>Keranjang masih kosong.</p>
+        <p>Keranjang masih kosong.</p>
 
-<p style="font-size:12px;margin-top:8px">
-Yuk pilih produk favoritmu!
-</p>
+        <p style="font-size:12px;margin-top:8px">
+          Yuk pilih produk favoritmu!
+        </p>
 
-<button class="checkout"
-onclick="beranda()">
+        <button
+          class="checkout"
+          onclick="beranda()">
 
-Belanja Sekarang
+          Belanja Sekarang
 
-</button>
+        </button>
 
-</div>
+      </div>
 
-`;
+    `;
 
-return;
+    return;
+  }
 
-}
+  let html = "";
 
-let html="";
+  let total = 0;
 
-let total=0;
+  keranjang.forEach(function(item,index){
 
-keranjang.forEach(function(item,index){
+    const subtotal =
+      item.harga * item.jumlah;
 
-const subtotal=
-item.harga*item.jumlah;
+    total += subtotal;
 
-total+=subtotal;
+    const fotoProduk =
+      item.image_url
+      ? `
+        <img
+          src="${escapeHTML(item.image_url)}"
+          alt="Foto ${escapeHTML(item.nama)}"
+          style="
+            width:75px;
+            height:75px;
+            object-fit:cover;
+            border-radius:10px;
+            border:1px solid #ddd;">
+        `
+      : `
+        <div
+          style="
+            width:75px;
+            height:75px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            background:#f5f5f5;
+            border-radius:10px;
+            font-size:32px;">
 
-html+=`
+          ${item.icon || "📦"}
 
-<div class="card">
+        </div>
+        `;
 
-<div class="item-keranjang">
+    html += `
 
-<div class="item-icon">
-${item.icon}
-</div>
+      <div class="card">
 
-<div class="item-detail">
+        <div class="item-keranjang">
 
-<div class="item-nama">
-${item.nama}
-</div>
+          <div class="item-icon">
 
-<div class="item-harga">
-${rupiah(item.harga)}
-</div>
+            ${fotoProduk}
 
-<div class="jumlah">
+          </div>
 
-<button onclick="kurangi(${index})">
-−
-</button>
+          <div class="item-detail">
 
-<span>${item.jumlah}</span>
+            <div class="item-nama">
+              ${escapeHTML(item.nama)}
+            </div>
 
-<button onclick="tambahJumlah(${index})">
-+
-</button>
+            <div class="item-harga">
+              ${rupiah(item.harga)}
+            </div>
 
-</div>
+            <div class="jumlah">
 
-</div>
+              <button
+                onclick="kurangi(${index})">
 
-<button class="hapus"
-onclick="hapusItem(${index})">
+                −
 
-🗑️
+              </button>
 
-</button>
+              <span>
+                ${item.jumlah}
+              </span>
 
-</div>
+              <button
+                onclick="tambahJumlah(${index})">
 
-<div style="text-align:right;font-weight:bold;margin-top:10px">
+                +
 
-Subtotal:
-${rupiah(subtotal)}
+              </button>
 
-</div>
+            </div>
 
-</div>
+          </div>
 
-`;
+          <button
+            class="hapus"
+            onclick="hapusItem(${index})">
 
-});
+            🗑️
 
-html+=`
+          </button>
 
-<div class="card">
+        </div>
 
-<div class="total-row">
+        <div
+          style="
+            text-align:right;
+            font-weight:bold;
+            margin-top:10px">
 
-<span>Total</span>
+          Subtotal:
+          ${rupiah(subtotal)}
 
-<span style="color:#1261c9">
-${rupiah(total)}
-</span>
+        </div>
 
-</div>
+      </div>
 
-<button class="checkout"
-onclick="bukaCheckout()">
+    `;
 
-Lanjut ke Checkout
+  });
 
-</button>
+  html += `
 
-</div>
+    <div class="card">
 
-`;
+      <div class="total-row">
 
-box.innerHTML=html;
+        <span>Total</span>
 
-}
+        <span style="color:#1261c9">
 
+          ${rupiah(total)}
 
-function tambahJumlah(index){
+        </span>
 
-if(!keranjang[index]) return;
+      </div>
 
-const produk=
-produkData.find(function(item){
+      <button
+        class="checkout"
+        onclick="bukaCheckout()">
 
-return item.id===keranjang[index].id;
+        Lanjut ke Checkout
 
-});
+      </button>
 
-if(
-produk &&
-keranjang[index].jumlah>=produk.stok
-){
+    </div>
 
-pesan("Jumlah sudah mencapai stok");
+  `;
 
-return;
-
-}
-
-keranjang[index].jumlah++;
-
-simpanKeranjang();
-
-tampilkanKeranjang();
+  box.innerHTML = html;
 
 }
 
