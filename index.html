@@ -5346,7 +5346,7 @@ async function simpanProduk(){
   const { error: uploadError } =
     await supabaseClient
       .storage
-      .from("product_images")
+      .from("product-images")
       .upload(
         path,
         file,
@@ -5374,7 +5374,7 @@ async function simpanProduk(){
   const { data: publicUrlData } =
     supabaseClient
       .storage
-      .from("product_images")
+      .from("product-images")
       .getPublicUrl(path);
 
   if(
