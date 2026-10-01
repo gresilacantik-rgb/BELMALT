@@ -3775,7 +3775,10 @@ const path =
 
   try{
 
-    // Ambil data toko
+    // ==============================
+    // AMBIL DATA TOKO
+    // ==============================
+
     const { data: toko, error: tokoError } =
       await supabaseClient
       .from("shops")
@@ -3801,7 +3804,11 @@ const path =
       return;
     }
 
-    // Ambil semua produk milik toko
+
+    // ==============================
+    // AMBIL PRODUK TOKO
+    // ==============================
+
     const { data: produk, error: produkError } =
       await supabaseClient
       .from("products")
@@ -3822,18 +3829,97 @@ const path =
       return;
     }
 
+
+    // ==============================
+    // FOTO / LOGO TOKO
+    // ==============================
+
+    const logoToko = toko.logo_url || "";
+
+    const tampilanLogo = logoToko
+      ? `
+        <img
+          src="${escapeHTML(logoToko)}"
+          alt="Logo ${escapeHTML(toko.name || "Toko")}"
+          style="
+            width:90px;
+            height:90px;
+            object-fit:cover;
+            border-radius:50%;
+            border:4px solid white;
+            box-shadow:0 3px 12px rgba(0,0,0,.18);
+            background:white">
+      `
+      : `
+        <div style="
+          width:90px;
+          height:90px;
+          border-radius:50%;
+          background:white;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          font-size:42px;
+          border:4px solid white;
+          box-shadow:0 3px 12px rgba(0,0,0,.18)">
+          🏪
+        </div>
+      `;
+
+
+    // ==============================
+    // STATUS TOKO
+    // ==============================
+
+    const statusToko = toko.active !== false
+      ? `
+        <span style="
+          display:inline-flex;
+          align-items:center;
+          gap:5px;
+          color:#16803c;
+          background:#eaf8ef;
+          padding:5px 10px;
+          border-radius:20px;
+          font-size:12px;
+          font-weight:bold">
+          🟢 Toko aktif
+        </span>
+      `
+      : `
+        <span style="
+          display:inline-flex;
+          align-items:center;
+          gap:5px;
+          color:#777;
+          background:#f1f1f1;
+          padding:5px 10px;
+          border-radius:20px;
+          font-size:12px;
+          font-weight:bold">
+          ⚪ Toko tidak aktif
+        </span>
+      `;
+
+
+    // ==============================
+    // PRODUK TOKO
+    // ==============================
+
     let daftarProduk = "";
 
     if(!produk || produk.length === 0){
 
       daftarProduk = `
-        <p style="
-        text-align:center;
-        color:#777">
-
-        Toko ini belum memiliki produk.
-
-        </p>
+        <div class="card" style="
+          text-align:center;
+          color:#777;
+          padding:25px">
+          📦
+          <p>
+            Toko ini belum memiliki produk.
+          </p>
+        </div>
       `;
 
     }else{
@@ -3847,17 +3933,17 @@ const path =
             ${
               item.image_url
               ? `
-              <img
-              src="${escapeHTML(item.image_url)}"
-              alt="${escapeHTML(item.name)}"
-              style="
-              width:100%;
-              height:100%;
-              object-fit:cover;
-              border-radius:10px">
+                <img
+                  src="${escapeHTML(item.image_url)}"
+                  alt="${escapeHTML(item.name)}"
+                  style="
+                    width:100%;
+                    height:100%;
+                    object-fit:cover;
+                    border-radius:10px">
               `
               : `
-              📦
+                📦
               `
             }
 
@@ -3874,9 +3960,9 @@ const path =
             </div>
 
             <div style="
-            font-size:11px;
-            color:#777;
-            margin-top:4px">
+              font-size:11px;
+              color:#777;
+              margin-top:4px">
 
               Stok: ${item.stock ?? 0}
 
@@ -3884,13 +3970,13 @@ const path =
 
             <div class="lokasi">
 
-              📍 ${escapeHTML(item.location || "-")}
+              📍 ${escapeHTML(item.location || toko.location || "-")}
 
             </div>
 
             <button
-            class="tombol"
-            onclick="tambahKeranjang(${item.id})">
+              class="tombol"
+              onclick="tambahKeranjang(${item.id})">
 
               + Keranjang
 
@@ -3904,27 +3990,82 @@ const path =
 
     }
 
+
+    // ==============================
+    // TAMPILKAN HALAMAN TOKO
+    // ==============================
+
     document.getElementById("halamanToko").innerHTML = `
 
-      <div class="card">
+      <div style="
+        background:linear-gradient(135deg,#1261C9,#1976D2);
+        border-radius:16px;
+        padding:22px 15px;
+        color:white;
+        text-align:center;
+        margin-bottom:15px">
 
-        <h2>
-          🏪 ${escapeHTML(toko.name || "Toko")}
+        ${tampilanLogo}
+
+        <h2 style="
+          margin:12px 0 6px;
+          font-size:22px">
+
+          ${escapeHTML(toko.name || "Toko")}
+
         </h2>
 
-        <p style="
-        color:#777;
-        font-size:13px">
+        <div style="
+          margin-bottom:10px">
+
+          ${statusToko}
+
+        </div>
+
+        <div style="
+          font-size:13px;
+          opacity:.95">
 
           📍 ${escapeHTML(toko.location || "-")}
 
-        </p>
+        </div>
 
       </div>
+
+
+      <div class="card" style="
+        margin-bottom:15px">
+
+        <div style="
+          font-weight:bold;
+          font-size:16px;
+          margin-bottom:8px">
+
+          📝 Tentang Toko
+
+        </div>
+
+        <div style="
+          color:#666;
+          font-size:13px;
+          line-height:1.6">
+
+          ${
+            escapeHTML(
+              toko.description ||
+              "Toko ini belum menambahkan deskripsi."
+            )
+          }
+
+        </div>
+
+      </div>
+
 
       <div class="judul">
-        Produk Toko
+        🛍️ Produk Toko
       </div>
+
 
       <div class="produk-grid">
 
@@ -3932,15 +4073,17 @@ const path =
 
       </div>
 
+
       <button
-      onclick="renderBeranda()"
-      style="
-      width:100%;
-      margin-top:15px;
-      padding:12px;
-      border:1px solid #ddd;
-      border-radius:8px;
-      background:white">
+        onclick="renderBeranda()"
+        style="
+          width:100%;
+          margin-top:15px;
+          padding:12px;
+          border:1px solid #ddd;
+          border-radius:8px;
+          background:white;
+          font-weight:bold">
 
         ← Kembali ke Beranda
 
@@ -3950,7 +4093,10 @@ const path =
 
   }catch(error){
 
-    console.error("Kesalahan halaman toko:", error);
+    console.error(
+      "Kesalahan halaman toko:",
+      error
+    );
 
     const wadah =
       document.getElementById("halamanToko");
@@ -3964,7 +4110,7 @@ const path =
 
   }
 
-}
+  }
 
   async function muatPesananMasuk(){
 
