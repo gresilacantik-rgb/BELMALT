@@ -20,6 +20,7 @@ jobs:
           mkdir -p android/app/src/main/java/com/belmalt/app
           mkdir -p android/app/src/main/res/values
           mkdir -p android/app/src/main/res/drawable
+          mkdir -p android/app/src/main/res/mipmap-anydpi-v26
 
           cp index.html android/app/src/main/assets/index.html
 
@@ -80,6 +81,12 @@ jobs:
           </resources>
           EOF
 
+                    cat > android/app/src/main/res/values/colors.xml <<'EOF'
+          <resources>
+              <color name="belmalt_blue">#1261C9</color>
+          </resources>
+          EOF
+
                     cat > android/app/src/main/res/drawable/belmalt_icon.xml <<'EOF'
           <vector xmlns:android="http://schemas.android.com/apk/res/android"
               android:width="108dp"
@@ -109,18 +116,24 @@ jobs:
           </vector>
           EOF
 
+                    cat > android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml <<'EOF'
+          <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+              <background android:drawable="@color/belmalt_blue"/>
+              <foreground android:drawable="@drawable/belmalt_icon"/>
+          </adaptive-icon>
+          EOF
+
           cat > android/app/src/main/AndroidManifest.xml <<'EOF'
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
               <uses-permission android:name="android.permission.INTERNET"/>
 
-              <application
-                  android:theme="@style/AppTheme"
-                  android:label="BELMALT">
-                  
-                  android:icon="@drawable/belmalt_icon">
+                                <application
+                      android:theme="@style/AppTheme"
+                      android:label="BELMALT"
+                      android:icon="@mipmap/ic_launcher">
 
-                  <activity
+                      <activity
                       android:name=".MainActivity"
                       android:screenOrientation="portrait"
                       android:exported="true">
