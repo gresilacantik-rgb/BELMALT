@@ -19,6 +19,7 @@ jobs:
           mkdir -p android/app/src/main/assets
           mkdir -p android/app/src/main/java/com/belmalt/app
           mkdir -p android/app/src/main/res/values
+          mkdir -p android/app/src/main/res/drawable
 
           cp index.html android/app/src/main/assets/index.html
 
@@ -79,6 +80,35 @@ jobs:
           </resources>
           EOF
 
+                    cat > android/app/src/main/res/drawable/belmalt_icon.xml <<'EOF'
+          <vector xmlns:android="http://schemas.android.com/apk/res/android"
+              android:width="108dp"
+              android:height="108dp"
+              android:viewportWidth="108"
+              android:viewportHeight="108">
+
+              <path
+                  android:fillColor="#1261C9"
+                  android:pathData="M0,0 L108,0 L108,108 L0,108 Z"/>
+
+              <path
+                  android:fillColor="#FFFFFF"
+                  android:pathData="M27,40 L81,40 L76,88 L32,88 Z"/>
+
+              <path
+                  android:strokeColor="#FFFFFF"
+                  android:strokeWidth="7"
+                  android:strokeLineCap="round"
+                  android:fillColor="@android:color/transparent"
+                  android:pathData="M42,40 C42,20 66,20 66,40"/>
+
+              <path
+                  android:fillColor="#1261C9"
+                  android:pathData="M43,52 L55,52 C63,52 67,55 67,60 C67,64 65,66 62,67 C66,68 69,71 69,76 C69,82 64,85 56,85 L43,85 Z M50,57 L50,64 L55,64 C58,64 60,62 60,60 C60,58 58,57 55,57 Z M50,70 L50,79 L56,79 C60,79 62,77 62,74 C62,71 60,70 56,70 Z"/>
+
+          </vector>
+          EOF
+
           cat > android/app/src/main/AndroidManifest.xml <<'EOF'
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
@@ -87,6 +117,8 @@ jobs:
               <application
                   android:theme="@style/AppTheme"
                   android:label="BELMALT">
+                  
+                  android:icon="@drawable/belmalt_icon">
 
                   <activity
                       android:name=".MainActivity"
