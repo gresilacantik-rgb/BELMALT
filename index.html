@@ -3871,35 +3871,121 @@ const path =
     // STATUS TOKO
     // ==============================
 
-    const statusToko = toko.active !== false
-      ? `
-        <span style="
-          display:inline-flex;
-          align-items:center;
-          gap:5px;
-          color:#16803c;
-          background:#eaf8ef;
-          padding:5px 10px;
-          border-radius:20px;
-          font-size:12px;
-          font-weight:bold">
-          🟢 Toko aktif
-        </span>
-      `
-      : `
-        <span style="
-          display:inline-flex;
-          align-items:center;
-          gap:5px;
-          color:#777;
-          background:#f1f1f1;
-          padding:5px 10px;
-          border-radius:20px;
-          font-size:12px;
-          font-weight:bold">
-          ⚪ Toko tidak aktif
-        </span>
-      `;
+    let statusToko = "";
+
+if(toko.last_online_at){
+
+  const waktuTerakhir =
+    new Date(toko.last_online_at);
+
+  const sekarang =
+    new Date();
+
+  const selisihMenit =
+    Math.floor(
+      (sekarang - waktuTerakhir) / 60000
+    );
+
+  if(selisihMenit <= 10){
+
+    statusToko = `
+      <div style="
+        display:inline-flex;
+        align-items:center;
+        gap:6px;
+        color:#16803c;
+        background:#eaf8ef;
+        padding:6px 12px;
+        border-radius:20px;
+        font-size:12px;
+        font-weight:bold">
+
+        🟢 Online
+
+      </div>
+    `;
+
+  }else{
+
+    let terakhirAktif = "";
+
+    if(selisihMenit < 60){
+
+      terakhirAktif =
+        selisihMenit +
+        " menit yang lalu";
+
+    }else if(selisihMenit < 1440){
+
+      terakhirAktif =
+        Math.floor(selisihMenit / 60) +
+        " jam yang lalu";
+
+    }else{
+
+      terakhirAktif =
+        Math.floor(selisihMenit / 1440) +
+        " hari yang lalu";
+
+    }
+
+    statusToko = `
+      <div style="
+        display:inline-flex;
+        align-items:center;
+        gap:6px;
+        color:#777;
+        background:#f1f1f1;
+        padding:6px 12px;
+        border-radius:20px;
+        font-size:12px;
+        font-weight:bold">
+
+        ⚪ Offline
+
+      </div>
+
+      <div style="
+        margin-top:6px;
+        font-size:11px;
+        opacity:.9">
+
+        Terakhir aktif ${terakhirAktif}
+
+      </div>
+    `;
+
+  }
+
+}else{
+
+  statusToko = `
+    <div style="
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      color:#777;
+      background:#f1f1f1;
+      padding:6px 12px;
+      border-radius:20px;
+      font-size:12px;
+      font-weight:bold">
+
+      ⚪ Offline
+
+    </div>
+
+    <div style="
+      margin-top:6px;
+      font-size:11px;
+      opacity:.9">
+
+      Belum ada informasi aktivitas
+
+    </div>
+  `;
+
+  }
 
 
     // ==============================
