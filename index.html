@@ -5937,7 +5937,7 @@ async function loginDemo(){
     document.getElementById("loginNama")
     ?.value.trim() || "";
 
-   pengguna = {
+  pengguna = {
     nama: nama,
     email: email,
     id: data.user.id
@@ -5948,10 +5948,35 @@ async function loginDemo(){
     JSON.stringify(pengguna)
   );
 
+
+  // ==============================
+  // CATAT TERAKHIR AKTIF TOKO
+  // ==============================
+
+  try{
+
+    await supabaseClient
+      .from("shops")
+      .update({
+        last_online_at: new Date().toISOString()
+      })
+      .eq("owner_id", data.user.id);
+
+  }catch(error){
+
+    console.error(
+      "Gagal memperbarui waktu aktif toko:",
+      error
+    );
+
+  }
+
+
   pesan("Berhasil masuk ke BELMALT 👋");
 
   akun();
-}
+
+    }
 
 async function daftarAkun(){
 
