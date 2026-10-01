@@ -815,54 +815,87 @@ async function renderBeranda(){
   }
 
   const produkSupabase = [];
+const produkSupabase = [];
 
-  for(const produk of (data || [])){
 
-    let namaToko = "Toko";
+// ==============================
+// AMBIL NAMA TOKO SEKALIGUS
+// ==============================
 
-    if(produk.shop_id){
+const shopIds = [
+  ...new Set(
+    (data || [])
+      .map(produk => produk.shop_id)
+      .filter(id => id)
+  )
+];
 
-      const { data: toko } =
-        await supabaseClient
-        .from("shops")
-        .select("name")
-        .eq("id", produk.shop_id)
-        .maybeSingle();
+let daftarToko = {};
 
-      if(toko && toko.name){
+if(shopIds.length > 0){
 
-        namaToko = toko.name;
+  const { data: tokoData, error: tokoError } =
+    await supabaseClient
+      .from("shops")
+      .select("id, name")
+      .in("id", shopIds);
 
-      }
+  if(tokoError){
 
-    }
+    console.error(
+      "Gagal memuat nama toko:",
+      tokoError
+    );
 
-    produkSupabase.push({
+  }else{
 
-      id: produk.id,
+    (tokoData || []).forEach(toko => {
 
-      shop_id: produk.shop_id,
-
-      nama: produk.name,
-
-      harga: Number(produk.price),
-
-      stok: produk.stock,
-
-      kategori: produk.category,
-
-      lokasi: produk.location || "",
-
-      deskripsi: produk.description || "",
-
-      gambar: produk.image_url || "",
-
-      namaToko: namaToko
+      daftarToko[toko.id] =
+        toko.name || "Toko";
 
     });
 
   }
 
+}
+
+
+// ==============================
+// BENTUK DATA PRODUK
+// ==============================
+
+for(const produk of (data || [])){
+
+  const namaToko =
+    daftarToko[produk.shop_id] ||
+    "Toko";
+
+  produkSupabase.push({
+
+    id: produk.id,
+
+    shop_id: produk.shop_id,
+
+    nama: produk.name,
+
+    harga: Number(produk.price),
+
+    stok: produk.stock,
+
+    kategori: produk.category,
+
+    lokasi: produk.location || "",
+
+    deskripsi: produk.description || "",
+
+    gambar: produk.image_url || "",
+
+    namaToko: namaToko
+
+  });
+
+}
   const semuaProduk = [
 
     ...produkSupabase,
