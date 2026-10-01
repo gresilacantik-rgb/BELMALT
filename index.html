@@ -4201,7 +4201,7 @@ if(toko.last_online_at){
 
   }
 
-  async function muatPesananMasuk(){
+async function muatPesananMasuk(){
 
   const wadah =
     document.getElementById("pesananMasuk");
@@ -4211,8 +4211,10 @@ if(toko.last_online_at){
   }
 
   if(!pengguna || !pengguna.id){
+
     wadah.innerHTML =
       "<p>Silakan login terlebih dahulu.</p>";
+
     return;
   }
 
@@ -4244,6 +4246,7 @@ if(toko.last_online_at){
 
     return;
   }
+
 
   // ==============================
   // AMBIL PRODUK MILIK TOKO
@@ -4281,10 +4284,16 @@ if(toko.last_online_at){
     return;
   }
 
+
+  // ==============================
+  // BUAT DAFTAR ID PRODUK
+  // ==============================
+
   const productIds =
     produk.map(function(item){
       return item.id;
     });
+
 
   // ==============================
   // AMBIL ITEM PESANAN
@@ -4322,16 +4331,20 @@ if(toko.last_online_at){
     return;
   }
 
-  const orderIds =
-    [...new Set(
-      itemPesanan.map(function(item){
-        return item.Order_id;
-      })
-    )];
 
   // ==============================
   // AMBIL DATA PESANAN
   // ==============================
+
+  const orderIds =
+    [
+      ...new Set(
+        itemPesanan.map(function(item){
+          return item.Order_id;
+        })
+      )
+    ];
+
 
   const { data: orders, error: orderError } =
     await supabaseClient
@@ -4368,6 +4381,20 @@ if(toko.last_online_at){
     return;
   }
 
+
+  // ==============================
+  // INDEX PRODUK
+  // ==============================
+
+  const daftarProduk = {};
+
+  produk.forEach(function(item){
+
+    daftarProduk[item.id] = item;
+
+  });
+
+
   // ==============================
   // TAMPILKAN PESANAN
   // ==============================
@@ -4376,18 +4403,148 @@ if(toko.last_online_at){
     orders.map(function(order){
 
       const status =
-        String(order.Status || "Menunggu diproses")
-        .trim();
+        String(
+          order.Status ||
+          "Menunggu diproses"
+        ).trim();
 
       const statusNormal =
         status.toLowerCase();
 
+
+      // ==========================
+      // PRODUK DALAM PESANAN
+      // ==========================
+
+      const itemOrder =
+        itemPesanan.filter(function(item){
+
+          return String(item.Order_id) ===
+            String(order.id);
+
+        });
+
+
+      const daftarProdukPesanan =
+        itemOrder.map(function(item){
+
+          const produkItem =
+            daftarProduk[item.product_id];
+
+          if(!produkItem){
+            return "";
+          }
+
+          const jumlah =
+            Number(item.Jumlah || 0);
+
+          const harga =
+            Number(
+              item.Harga ??
+              produkItem.price ??
+              0
+            );
+
+          const subtotal =
+            jumlah * harga;
+
+          const gambar =
+            produkItem.image_url || "";
+
+
+          return `
+
+            <div style="
+              display:flex;
+              gap:10px;
+              padding:10px 0;
+              border-bottom:1px solid #eee">
+
+              <div style="
+                width:65px;
+                height:65px;
+                flex-shrink:0;
+                border-radius:8px;
+                overflow:hidden;
+                background:#f5f5f5;
+                display:flex;
+                align-items:center;
+                justify-content:center">
+
+                ${
+                  gambar
+                  ?
+                  `
+                  <img
+                    src="${escapeHTML(gambar)}"
+                    loading="lazy"
+                    decoding="async"
+                    style="
+                    width:100%;
+                    height:100%;
+                    object-fit:cover">
+                  `
+                  :
+                  "📦"
+                }
+
+              </div>
+
+
+              <div style="
+                flex:1;
+                min-width:0">
+
+                <div style="
+                  font-weight:bold;
+                  font-size:14px">
+
+                  ${escapeHTML(
+                    produkItem.name || "Produk"
+                  )}
+
+                </div>
+
+
+                <div style="
+                  font-size:12px;
+                  color:#777;
+                  margin-top:4px">
+
+                  ${jumlah} ×
+                  Rp ${harga.toLocaleString("id-ID")}
+
+                </div>
+
+
+                <div style="
+                  margin-top:4px;
+                  font-size:13px;
+                  font-weight:bold;
+                  color:#1261C9">
+
+                  Subtotal:
+                  Rp ${subtotal.toLocaleString("id-ID")}
+
+                </div>
+
+              </div>
+
+            </div>
+
+          `;
+
+        }).join("");
+
+
+      // ==========================
+      // TOMBOL AKSI PENJUAL
+      // ==========================
+
       let tombol = "";
 
-      // --------------------------------
-      // STATUS 1
-      // --------------------------------
 
+      // STATUS 1
       if(
         statusNormal === "menunggu diproses" ||
         statusNormal === "menunggu"
@@ -4412,6 +4569,7 @@ if(toko.last_online_at){
 
           </button>
 
+
           <button
             onclick="batalkanPesananPenjual('${escapeHTML(String(order.id))}')"
             style="
@@ -4433,10 +4591,8 @@ if(toko.last_online_at){
 
       }
 
-      // --------------------------------
-      // STATUS 2
-      // --------------------------------
 
+      // STATUS 2
       else if(
         statusNormal === "diproses"
       ){
@@ -4460,6 +4616,7 @@ if(toko.last_online_at){
 
           </button>
 
+
           <button
             onclick="batalkanPesananPenjual('${escapeHTML(String(order.id))}')"
             style="
@@ -4481,10 +4638,8 @@ if(toko.last_online_at){
 
       }
 
-      // --------------------------------
-      // STATUS 3
-      // --------------------------------
 
+      // STATUS 3
       else if(
         statusNormal === "diserahkan ke kurir"
       ){
@@ -4508,10 +4663,8 @@ if(toko.last_online_at){
 
       }
 
-      // --------------------------------
-      // STATUS PENGIRIMAN KURIR
-      // --------------------------------
 
+      // STATUS PENGIRIMAN
       else if(
         statusNormal === "dalam perjalanan" ||
         statusNormal === "kurir menuju alamat pembeli" ||
@@ -4537,10 +4690,8 @@ if(toko.last_online_at){
 
       }
 
-      // --------------------------------
-      // STATUS DIBATALKAN
-      // --------------------------------
 
+      // STATUS DIBATALKAN
       else if(
         statusNormal === "dibatalkan"
       ){
@@ -4568,24 +4719,31 @@ if(toko.last_online_at){
 
       }
 
-      // --------------------------------
-      // TIMELINE STATUS
-      // --------------------------------
+
+      // ==========================
+      // TIMELINE
+      // ==========================
 
       const statusList = [
+
         "Menunggu diproses",
         "Diproses",
         "Diserahkan ke kurir",
         "Dalam perjalanan",
         "Kurir menuju alamat pembeli",
         "Pesanan telah diterima"
+
       ];
+
 
       const posisi =
         statusList.findIndex(function(item){
+
           return item.toLowerCase() ===
             statusNormal;
+
         });
+
 
       const timeline =
         statusList.map(function(item, index){
@@ -4616,6 +4774,11 @@ if(toko.last_online_at){
 
         }).join("");
 
+
+      // ==========================
+      // KARTU PESANAN
+      // ==========================
+
       return `
 
         <div class="card"
@@ -4623,11 +4786,16 @@ if(toko.last_online_at){
             margin-top:12px;
             padding:14px">
 
-          <h3 style="margin-top:0">
 
-            📦 Pesanan #${escapeHTML(String(order.id))}
+          <h3 style="
+            margin-top:0">
+
+            📦 Pesanan #${escapeHTML(
+              String(order.id)
+            )}
 
           </h3>
+
 
           <p style="
             font-size:13px;
@@ -4640,27 +4808,94 @@ if(toko.last_online_at){
 
           </p>
 
-          <p style="font-size:13px">
+
+          <!-- PRODUK YANG DIBELI -->
+
+          <div style="
+            margin-top:12px">
+
+            <div style="
+              font-weight:bold;
+              margin-bottom:5px">
+
+              🛍️ Produk yang Dibeli
+
+            </div>
+
+            ${daftarProdukPesanan}
+
+          </div>
+
+
+          <!-- ALAMAT -->
+
+          <p style="
+            font-size:13px;
+            margin-top:14px">
 
             📍 Alamat Pembeli:<br>
 
             <span>
-              ${escapeHTML(order.Alamat || "-")}
+              ${escapeHTML(
+                order.Alamat || "-"
+              )}
             </span>
 
           </p>
+
+
+          <!-- ONGKIR -->
+
+          ${
+            order.Ongkir !== undefined
+            ?
+            `
+            <p style="
+              font-size:13px">
+
+              🚚 Ongkir:
+              <b>
+                Rp ${Number(
+                  order.Ongkir || 0
+                ).toLocaleString("id-ID")}
+              </b>
+
+            </p>
+            `
+            :
+            ""
+          }
+
+
+          <!-- TOTAL -->
 
           <p style="
             color:#e53935;
             font-weight:bold">
 
             💰 Total:
-            Rp ${Number(order.Total || 0)
-              .toLocaleString("id-ID")}
+            Rp ${Number(
+              order.Total || 0
+            ).toLocaleString("id-ID")}
 
           </p>
 
+
+          <!-- PEMBAYARAN -->
+
+          <p style="
+            font-size:13px">
+
+            💳 Pembayaran:
+            ${escapeHTML(
+              order["Metode-pembayaran"] || "-"
+            )}
+
+          </p>
+
+
           <hr>
+
 
           <p style="
             font-weight:bold;
@@ -4670,9 +4905,12 @@ if(toko.last_online_at){
 
           </p>
 
+
           ${timeline}
 
+
           ${tombol}
+
 
         </div>
 
@@ -4681,7 +4919,6 @@ if(toko.last_online_at){
     }).join("");
 
 }
-
 
 // ======================================
 // PENJUAL MENEKAN "PROSES PESANAN"
