@@ -6064,6 +6064,47 @@ async function loginDemo(){
 
     }
 
+  function updateAktivitasToko(){
+
+  if(!pengguna || !pengguna.id){
+    return;
+  }
+
+  supabaseClient
+    .from("shops")
+    .update({
+      last_online_at: new Date().toISOString()
+    })
+    .eq("owner_id", pengguna.id)
+    .then(function(result){
+
+      if(result.error){
+
+        console.error(
+          "Gagal memperbarui aktivitas toko:",
+          result.error
+        );
+
+      }
+
+    })
+    .catch(function(error){
+
+      console.error(
+        "Kesalahan aktivitas toko:",
+        error
+      );
+
+    });
+
+}
+
+  setInterval(function(){
+
+  updateAktivitasToko();
+
+}, 5 * 60 * 1000);
+
 async function daftarAkun(){
 
   const nama =
