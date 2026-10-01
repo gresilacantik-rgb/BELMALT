@@ -1034,8 +1034,10 @@ function buatProdukHTML(data){
           gambar
           ? `
           <img
-          src="${escapeHTML(gambar)}"
-          alt="${escapeHTML(item.nama)}"
+  src="${escapeHTML(gambar)}"
+  loading="lazy"
+  decoding="async"
+  alt="${escapeHTML(item.nama)}"
           style="
           width:100%;
           height:100%;
