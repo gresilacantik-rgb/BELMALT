@@ -2324,7 +2324,10 @@ async function riwayatPesanan(){
     return;
   }
 
-  // Ambil pesanan
+  // ==============================
+  // AMBIL PESANAN
+  // ==============================
+
   const { data: order, error: orderError } =
     await supabaseClient
       .from("Orders")
@@ -2364,7 +2367,10 @@ async function riwayatPesanan(){
     return;
   }
 
-  // Ambil item pesanan
+  // ==============================
+  // AMBIL ITEM PESANAN
+  // ==============================
+
   const { data: detailOrder, error: itemError } =
     await supabaseClient
       .from("Order_items")
@@ -2387,8 +2393,12 @@ async function riwayatPesanan(){
           Detail produk gagal dimuat.
         </p>
 
-        <p style="font-size:12px;color:#777">
+        <p style="
+          font-size:12px;
+          color:#777">
+
           ${itemError.message}
+
         </p>
 
         <button
@@ -2406,7 +2416,10 @@ async function riwayatPesanan(){
     return;
   }
 
-  // Ambil produk
+  // ==============================
+  // AMBIL PRODUK
+  // ==============================
+
   const productIds =
     [...new Set(
       (detailOrder || []).map(function(item){
@@ -2418,7 +2431,10 @@ async function riwayatPesanan(){
 
   if(productIds.length > 0){
 
-    const { data: daftarProduk, error: productError } =
+    const {
+      data: daftarProduk,
+      error: productError
+    } =
       await supabaseClient
         .from("products")
         .select("*")
@@ -2439,15 +2455,24 @@ async function riwayatPesanan(){
     }
   }
 
+  // ==============================
+  // DATA PESANAN
+  // ==============================
+
   const nomor =
     order["Nomor-pesanan"] ||
     order.id;
 
   const status =
-    order.Status ||
-    "Menunggu diproses";
+    String(
+      order.Status ||
+      "Menunggu diproses"
+    ).trim();
 
-  // Hitung subtotal
+  // ==============================
+  // HITUNG SUBTOTAL
+  // ==============================
+
   let subtotal = 0;
 
   (detailOrder || []).forEach(function(item){
@@ -2464,22 +2489,28 @@ async function riwayatPesanan(){
   const total =
     Number(order.Total || subtotal + ongkir);
 
-  // Status pesanan
+
+  // ==================================================
+  // PERKEMBANGAN PESANAN
+  // ==================================================
+
   let statusHTML = "";
 
-  if(status === "Dibatalkan"){
+  if(
+    status.toLowerCase() ===
+    "dibatalkan"
+  ){
 
     statusHTML = `
 
       <div style="
+        margin-top:18px;
         padding:15px;
         border-radius:12px;
         background:#fdecec;
-        margin-top:15px;
-        font-weight:bold;
         color:#d32f2f;
         text-align:center;
-      ">
+        font-weight:bold">
 
         ❌ Pesanan Dibatalkan
 
@@ -2490,32 +2521,49 @@ async function riwayatPesanan(){
   }else{
 
     const statusList = [
+
       "Menunggu diproses",
+
       "Diproses",
-      "Dikirim",
-      "Selesai"
+
+      "Diserahkan ke kurir",
+
+      "Dalam perjalanan",
+
+      "Kurir menuju alamat pembeli",
+
+      "Pesanan telah diterima"
+
     ];
+
+    const statusLower =
+      status.toLowerCase();
+
+    const posisi =
+      statusList.findIndex(function(item){
+
+        return item.toLowerCase() ===
+          statusLower;
+
+      });
 
     statusHTML = `
 
       <div style="
-        margin-top:18px;
-      ">
+        margin-top:18px">
 
         <strong>
           📈 Perkembangan Pesanan
         </strong>
 
         <div style="
-          margin-top:12px;
-        ">
+          margin-top:12px">
 
           ${
-            statusList.map(function(item){
+            statusList.map(function(item, index){
 
               const aktif =
-                statusList.indexOf(item) <=
-                statusList.indexOf(status);
+                posisi >= index;
 
               return `
 
@@ -2523,14 +2571,19 @@ async function riwayatPesanan(){
                   display:flex;
                   align-items:center;
                   gap:10px;
-                  margin:9px 0;
+                  margin:11px 0;
                   font-size:14px;
                   font-weight:${aktif ? "bold" : "normal"};
                   color:${aktif ? "#1261c9" : "#999"};
                 ">
 
-                  <span>
-                    ${aktif ? "●" : "○"}
+                  <span style="
+                    width:20px;
+                    text-align:center;
+                    font-size:16px">
+
+                    ${aktif ? "✓" : "○"}
+
                   </span>
 
                   <span>
@@ -2552,7 +2605,12 @@ async function riwayatPesanan(){
 
   }
 
-  // Tombol batalkan hanya sebelum Dikirim
+
+  // ==================================================
+  // TOMBOL BATAL
+  // HANYA SEBELUM DISERAHKAN KE KURIR
+  // ==================================================
+
   let tombolBatal = "";
 
   if(
@@ -2578,29 +2636,47 @@ async function riwayatPesanan(){
 
   }
 
+
+  // ==============================
+  // TAMPILKAN DETAIL
+  // ==============================
+
   box.innerHTML = `
 
     <div class="card">
 
       <div style="
         font-size:18px;
-        font-weight:bold;
-      ">
+        font-weight:bold">
 
-        📦 Pesanan #${nomor}
+        📦 Pesanan #${escapeHTML(String(nomor))}
 
       </div>
 
       <div style="
         font-size:12px;
         color:#777;
-        margin-top:8px;
-      ">
+        margin-top:8px">
 
         ${order.created_at
           ? new Date(order.created_at)
               .toLocaleString("id-ID")
           : ""}
+
+      </div>
+
+      <div style="
+        margin-top:10px;
+        padding:10px;
+        border-radius:8px;
+        background:#f5f5f5">
+
+        Status saat ini:
+        <strong>
+
+          ${escapeHTML(status)}
+
+        </strong>
 
       </div>
 
@@ -2616,7 +2692,8 @@ async function riwayatPesanan(){
       </h3>
 
       ${
-        !detailOrder || detailOrder.length === 0
+        !detailOrder ||
+        detailOrder.length === 0
 
         ? `
 
@@ -2649,17 +2726,15 @@ async function riwayatPesanan(){
 
               <div style="
                 padding:12px 0;
-                border-bottom:1px solid #eee;
-              ">
+                border-bottom:1px solid #eee">
 
                 <div style="
                   display:flex;
                   justify-content:space-between;
-                  gap:10px;
-                ">
+                  gap:10px">
 
                   <strong>
-                    ${namaProduk}
+                    ${escapeHTML(String(namaProduk))}
                   </strong>
 
                   <strong>
@@ -2671,8 +2746,7 @@ async function riwayatPesanan(){
                 <div style="
                   margin-top:6px;
                   font-size:13px;
-                  color:#666;
-                ">
+                  color:#666">
 
                   🔢 Jumlah: ${jumlah}
 
@@ -2681,8 +2755,7 @@ async function riwayatPesanan(){
                 <div style="
                   margin-top:4px;
                   font-size:13px;
-                  color:#666;
-                ">
+                  color:#666">
 
                   💰 Harga satuan:
                   ${rupiah(harga)}
@@ -2696,12 +2769,12 @@ async function riwayatPesanan(){
           }).join("")
       }
 
+
       <div style="
         margin-top:15px;
         display:flex;
         justify-content:space-between;
-        font-weight:bold;
-      ">
+        font-weight:bold">
 
         <span>
           💵 Subtotal
@@ -2713,11 +2786,11 @@ async function riwayatPesanan(){
 
       </div>
 
+
       <div style="
         margin-top:8px;
         display:flex;
-        justify-content:space-between;
-      ">
+        justify-content:space-between">
 
         <span>
           🚚 Ongkir
@@ -2729,6 +2802,7 @@ async function riwayatPesanan(){
 
       </div>
 
+
       <div style="
         border-top:1px solid #ddd;
         margin-top:12px;
@@ -2736,8 +2810,7 @@ async function riwayatPesanan(){
         display:flex;
         justify-content:space-between;
         font-size:18px;
-        font-weight:bold;
-      ">
+        font-weight:bold">
 
         <span>
           💰 Total Pembayaran
@@ -2761,8 +2834,13 @@ async function riwayatPesanan(){
       <p style="margin-top:10px">
 
         💳 Metode pembayaran:
+
         <strong>
-          ${order["Metode-pembayaran"] || "-"}
+          ${escapeHTML(
+            String(
+              order["Metode-pembayaran"] || "-"
+            )
+          )}
         </strong>
 
       </p>
@@ -2778,10 +2856,11 @@ async function riwayatPesanan(){
 
       <p style="
         margin-top:10px;
-        line-height:1.5;
-      ">
+        line-height:1.5">
 
-        ${order.Alamat || "-"}
+        ${escapeHTML(
+          String(order.Alamat || "-")
+        )}
 
       </p>
 
@@ -2804,12 +2883,13 @@ async function riwayatPesanan(){
 
   `;
 
+
   window.scrollTo({
     top:0,
     behavior:"smooth"
   });
 
-}
+  }
 
   async function batalkanPesanan(orderId){
 
