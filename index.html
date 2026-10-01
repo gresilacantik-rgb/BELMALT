@@ -814,99 +814,68 @@ async function renderBeranda(){
     return;
   }
 
+
 const produkSupabase = [];
-
-
-// ==============================
-// AMBIL NAMA TOKO SEKALIGUS
-// ==============================
-
-const shopIds = [
-  ...new Set(
-    (data || [])
-      .map(produk => produk.shop_id)
-      .filter(id => id)
-  )
-];
-
-let daftarToko = {};
-
-if(shopIds.length > 0){
-
-  const { data: tokoData, error: tokoError } =
-    await supabaseClient
-      .from("shops")
-      .select("id, name")
-      .in("id", shopIds);
-
-  if(tokoError){
-
-    console.error(
-      "Gagal memuat nama toko:",
-      tokoError
-    );
-
-  }else{
-
-    (tokoData || []).forEach(toko => {
-
-      daftarToko[toko.id] =
-        toko.name || "Toko";
-
-    });
-
-  }
-
-}
-
-
-// ==============================
-// BENTUK DATA PRODUK
-// ==============================
 
 for(const produk of (data || [])){
 
-  const namaToko =
-    daftarToko[produk.shop_id] ||
-    "Toko";
+let namaToko = "Toko";  
 
-  produkSupabase.push({
+if(produk.shop_id){  
 
-    id: produk.id,
+  const { data: toko } =  
+    await supabaseClient  
+    .from("shops")  
+    .select("name")  
+    .eq("id", produk.shop_id)  
+    .maybeSingle();  
 
-    shop_id: produk.shop_id,
+  if(toko && toko.name){  
 
-    nama: produk.name,
+    namaToko = toko.name;  
 
-    harga: Number(produk.price),
+  }  
 
-    stok: produk.stock,
+}  
 
-    kategori: produk.category,
+produkSupabase.push({  
 
-    lokasi: produk.location || "",
+  id: produk.id,  
 
-    deskripsi: produk.description || "",
+  shop_id: produk.shop_id,  
 
-    gambar: produk.image_url || "",
+  nama: produk.name,  
 
-    namaToko: namaToko
+  harga: Number(produk.price),  
 
-  });
+  stok: produk.stock,  
+
+  kategori: produk.category,  
+
+  lokasi: produk.location || "",  
+
+  deskripsi: produk.description || "",  
+
+  gambar: produk.image_url || "",  
+
+  namaToko: namaToko  
+
+});
 
 }
-  const semuaProduk = [
 
-    ...produkSupabase,
+const semuaProduk = [
 
-    ...produkData
+...produkSupabase,  
 
-  ];
+...produkData
 
-  window.semuaProdukBELMALT = semuaProduk;
+];
 
-  document.getElementById("produk").innerHTML =
-    buatProdukHTML(semuaProduk);
+window.semuaProdukBELMALT = semuaProduk;
+
+document.getElementById("produk").innerHTML =
+buatProdukHTML(semuaProduk);
 
 }
 
