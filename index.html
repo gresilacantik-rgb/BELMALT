@@ -3763,7 +3763,6 @@ function bukaPesananMasuk(){
       ${judul}
     </div>
 
-
     <button
       onclick="bukaPesananMasuk()"
       style="
@@ -3779,7 +3778,6 @@ function bukaPesananMasuk(){
       ← Kembali ke Pesanan Masuk
 
     </button>
-
 
     <div class="card">
 
@@ -3800,30 +3798,424 @@ function bukaPesananMasuk(){
   `;
 
 
-  // Untuk sementara kita tampilkan pesan
-  // bahwa kategori siap digunakan.
+  // ==========================
+  // KHUSUS PESANAN BARU
+  // ==========================
+
+  if(kategori !== "baru"){
+    return;
+  }
+
 
   const hasil =
     document.getElementById("pesananKategori");
 
-  if(hasil){
+  if(!hasil){
+    return;
+  }
+
+
+  if(!pengguna || !pengguna.id){
 
     hasil.innerHTML = `
-
       <p style="
         text-align:center;
-        color:#777;
-        font-size:13px">
+        color:#777">
 
-        Memuat ${judul}...
+        Silakan login terlebih dahulu.
 
       </p>
+    `;
 
+    return;
+  }
+
+
+  try{
+
+    // Cari toko penjual
+    const { data: toko, error: tokoError } =
+      await supabaseClient
+        .from("shops")
+        .select("id")
+        .eq("owner_id", pengguna.id)
+        .maybeSingle();
+
+
+    if(tokoError){
+
+      console.error(tokoError);
+
+      hasil.innerHTML = `
+        <p style="
+          text-align:center;
+          color:#d00">
+
+          Gagal mencari toko.
+
+        </p>
+      `;
+
+      return;
+    }
+
+
+    if(!toko){
+
+      hasil.innerHTML = `
+        <p style="
+          text-align:center;
+          color:#777">
+
+          Toko belum ditemukan.
+
+        </p>
+      `;
+
+      return;
+    }
+
+
+    // Ambil produk milik toko
+    const { data: produk, error: produkError } =
+      await supabaseClient
+        .from("products")
+        .select("id")
+        .eq("shop_id", toko.id);
+
+
+    if(produkError){
+
+      console.error(produkError);
+
+      hasil.innerHTML = `
+        <p style="
+          text-align:center;
+          color:#d00">
+
+          Gagal mencari produk toko.
+
+        </p>
+      `;
+
+      return;
+    }
+
+
+    if(!produk || produk.length === 0){
+
+      hasil.innerHTML = `
+        <p style="
+          text-align:center;
+          color:#777">
+
+          Belum ada produk di toko.
+
+        </p>
+      `;
+
+      return;
+    }
+
+
+    const productIds =
+      produk.map(item => item.id);
+
+
+    // Cari item pesanan yang berisi produk toko
+    const { data: itemPesanan, error: itemError } =
+      await supabaseClient
+        .from("Order_items")
+        .select("*")
+        .in("product_id", productIds);
+
+
+    if(itemError){
+
+      console.error(itemError);
+
+      hasil.innerHTML = `
+        <p style="
+          text-align:center;
+          color:#d00">
+
+          Gagal memuat item pesanan.
+
+        </p>
+      `;
+
+      return;
+    }
+
+
+    if(!itemPesanan || itemPesanan.length === 0){
+
+      hasil.innerHTML = `
+        <p style="
+          text-align:center;
+          color:#777">
+
+          Belum ada pesanan baru.
+
+        </p>
+      `;
+
+      return;
+    }
+
+
+    const orderIds =
+      [...new Set(
+        itemPesanan.map(item => item.Order_id)
+      )];
+
+
+    // Ambil pesanan
+    const { data: pesanan, error: orderError } =
+      await supabaseClient
+        .from("Orders")
+        .select("*")
+        .in("id", orderIds)
+        .eq("Status", "Menunggu diproses")
+        .order("id", {
+          ascending:false
+        });
+
+
+    if(orderError){
+
+      console.error(orderError);
+
+      hasil.innerHTML = `
+        <p style="
+          text-align:center;
+          color:#d00">
+
+          Gagal memuat pesanan.
+
+        </p>
+      `;
+
+      return;
+    }
+
+
+    if(!pesanan || pesanan.length === 0){
+
+      hasil.innerHTML = `
+        <p style="
+          text-align:center;
+          color:#777">
+
+          Tidak ada pesanan baru.
+
+        </p>
+      `;
+
+      return;
+    }
+
+
+    // Ambil semua produk lengkap
+    const { data: produkLengkap } =
+      await supabaseClient
+        .from("products")
+        .select("*")
+        .in("id", productIds);
+
+
+    const produkMap = {};
+
+    (produkLengkap || []).forEach(item => {
+
+      produkMap[item.id] = item;
+
+    });
+
+
+    // Tampilkan pesanan
+    hasil.innerHTML = pesanan.map(order => {
+
+      const items =
+        itemPesanan.filter(
+          item =>
+            item.Order_id === order.id
+        );
+
+
+      return `
+
+        <div class="card"
+          style="
+            margin-bottom:12px;
+            border:1px solid #eee">
+
+          <h3 style="
+            margin-top:0">
+
+            🧾 Pesanan
+
+          </h3>
+
+
+          <p style="
+            font-size:13px">
+
+            <strong>No. Pesanan:</strong>
+            ${escapeHTML(
+              order["Nomor-pesanan"] ||
+              order.id ||
+              "-"
+            )}
+
+          </p>
+
+
+          ${
+            items.map(item => {
+
+              const produk =
+                produkMap[item.product_id];
+
+              return `
+
+                <div style="
+                  display:flex;
+                  gap:10px;
+                  padding:10px 0;
+                  border-top:1px solid #eee">
+
+                  ${
+                    produk && produk.image_url
+                    ? `
+                      <img
+                        src="${escapeHTML(
+                          produk.image_url
+                        )}"
+                        style="
+                          width:65px;
+                          height:65px;
+                          object-fit:cover;
+                          border-radius:8px">
+                    `
+                    : `
+                      <div style="
+                        width:65px;
+                        height:65px;
+                        display:flex;
+                        align-items:center;
+                        justify-content:center;
+                        background:#f5f5f5;
+                        border-radius:8px;
+                        font-size:28px">
+
+                        📦
+
+                      </div>
+                    `
+                  }
+
+                  <div>
+
+                    <strong>
+                      ${escapeHTML(
+                        produk?.name ||
+                        "Produk"
+                      )}
+                    </strong>
+
+                    <div style="
+                      font-size:13px;
+                      color:#777;
+                      margin-top:4px">
+
+                      Jumlah:
+                      ${item.Jumlah || 0}
+
+                    </div>
+
+                    <div style="
+                      font-size:13px;
+                      color:#777">
+
+                      Harga:
+                      Rp ${Number(
+                        item.Harga ||
+                        produk?.price ||
+                        0
+                      ).toLocaleString("id-ID")}
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+              `;
+
+            }).join("")
+          }
+
+
+          <p style="
+            font-size:13px">
+
+            📍 <strong>Alamat:</strong><br>
+
+            ${escapeHTML(
+              order.Alamat || "-"
+            )}
+
+          </p>
+
+
+          <p style="
+            font-weight:bold">
+
+            💰 Total:
+            Rp ${Number(
+              order.Total || 0
+            ).toLocaleString("id-ID")}
+
+          </p>
+
+
+          <button
+            class="checkout"
+            onclick="bukaDetailPesananPenjual('${order.id}')">
+
+            👁️ Lihat Detail Pesanan
+
+          </button>
+
+
+        </div>
+
+      `;
+
+    }).join("");
+
+
+  }catch(error){
+
+    console.error(
+      "Error pesanan kategori:",
+      error
+    );
+
+    hasil.innerHTML = `
+      <p style="
+        text-align:center;
+        color:#d00">
+
+        Terjadi kesalahan saat memuat pesanan.
+
+      </p>
     `;
 
   }
 
-}
+  }
 
   async function editProfilToko(){
 
