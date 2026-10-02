@@ -1879,11 +1879,13 @@ async function buatPesanan(){
     return;
   }
 
+
   const pengiriman =
     pilihanPengiriman.value;
 
   const pembayaran =
     pilihanPembayaran.value;
+
 
   let subtotal = 0;
 
@@ -1895,13 +1897,16 @@ async function buatPesanan(){
 
   });
 
+
   const ongkir =
     pengiriman === "Express"
     ? 20000
     : 10000;
 
+
   const total =
     subtotal + ongkir;
+
 
   const alamatLengkap =
     nama +
@@ -1912,36 +1917,76 @@ async function buatPesanan(){
     ", " +
     kota;
 
-  // Nomor pesanan dibuat sebelum disimpan
+
+  // ==========================
+  // NOMOR PESANAN
+  // ==========================
+
   const nomorPesanan =
     "BM" +
     Date.now()
     .toString()
     .slice(-8);
 
-  // Simpan pesanan utama
+
+  // ==========================
+  // STATUS PEMBAYARAN
+  // ==========================
+
+  let statusPembayaran =
+    "Belum dibayar";
+
+
+  // COD tidak dianggap sebagai
+  // pembayaran yang tertunda
+
+  if(
+    pembayaran.toLowerCase() === "cod"
+  ){
+
+    statusPembayaran =
+      "COD";
+
+  }
+
+
+  // ==========================
+  // SIMPAN PESANAN
+  // ==========================
+
   const { data: pesananBaru, error: orderError } =
     await supabaseClient
     .from("Orders")
     .insert({
 
-      "Nomor-pesanan": nomorPesanan,
+      "Nomor-pesanan":
+        nomorPesanan,
 
-      Total: total,
+      Total:
+        total,
 
-      Ongkir: ongkir,
+      Ongkir:
+        ongkir,
 
-      Status: "Menunggu diproses",
+      Status:
+        "Menunggu diproses",
 
-      "Metode-pembayaran": pembayaran,
+      "Status-pembayaran":
+        statusPembayaran,
 
-      Alamat: alamatLengkap,
+      "Metode-pembayaran":
+        pembayaran,
 
-      user_id: pengguna.id
+      Alamat:
+        alamatLengkap,
+
+      user_id:
+        pengguna.id
 
     })
     .select()
     .single();
+
 
   if(orderError){
 
@@ -1955,29 +2000,38 @@ async function buatPesanan(){
     return;
   }
 
-  // Siapkan detail produk
+
+  // ==========================
+  // DETAIL PRODUK
+  // ==========================
+
   const itemPesanan =
     keranjang.map(function(item){
 
       return {
 
-        Order_id: pesananBaru.id,
+        Order_id:
+          pesananBaru.id,
 
-        product_id: item.id,
+        product_id:
+          item.id,
 
-        Jumlah: Number(item.jumlah),
+        Jumlah:
+          Number(item.jumlah),
 
-        Harga: Number(item.harga)
+        Harga:
+          Number(item.harga)
 
       };
 
     });
 
-  // Simpan detail produk
+
   const { error: itemError } =
     await supabaseClient
     .from("Order_items")
     .insert(itemPesanan);
+
 
   if(itemError){
 
@@ -1991,34 +2045,54 @@ async function buatPesanan(){
     return;
   }
 
-  // Data lokal untuk tampilan langsung
+
+  // ==========================
+  // DATA LOKAL
+  // ==========================
+
   const dataPesanan = {
 
-    id: pesananBaru.id,
+    id:
+      pesananBaru.id,
 
-    nomorPesanan: nomorPesanan,
+    nomorPesanan:
+      nomorPesanan,
 
-    nama: nama,
+    nama:
+      nama,
 
-    nomor: nomor,
+    nomor:
+      nomor,
 
-    alamat: alamat,
+    alamat:
+      alamat,
 
-    kota: kota,
+    kota:
+      kota,
 
-    pengiriman: pengiriman,
+    pengiriman:
+      pengiriman,
 
-    pembayaran: pembayaran,
+    pembayaran:
+      pembayaran,
 
-    subtotal: subtotal,
+    statusPembayaran:
+      statusPembayaran,
 
-    ongkir: ongkir,
+    subtotal:
+      subtotal,
 
-    total: total,
+    ongkir:
+      ongkir,
 
-    produk: [...keranjang],
+    total:
+      total,
 
-    status: "Menunggu diproses",
+    produk:
+      [...keranjang],
+
+    status:
+      "Menunggu diproses",
 
     tanggal:
       new Date()
@@ -2026,15 +2100,23 @@ async function buatPesanan(){
 
   };
 
-  pesanan.unshift(dataPesanan);
+
+  pesanan.unshift(
+    dataPesanan
+  );
+
 
   simpanPesanan();
+
 
   keranjang = [];
 
   simpanKeranjang();
 
-  tampilkanPesananBerhasil(dataPesanan);
+
+  tampilkanPesananBerhasil(
+    dataPesanan
+  );
 
 }
 
@@ -2102,7 +2184,7 @@ behavior:"smooth"
 /* =========================
    RIWAYAT PESANAN
 ========================= */
-  
+
 async function riwayatPesanan(){
 
   setNav("navAkun");
@@ -2113,18 +2195,283 @@ async function riwayatPesanan(){
       📦 Pesanan Saya
     </div>
 
+    <div class="card">
+
+      <button
+        onclick="bukaPesananSayaKategori('belum')"
+        style="
+          width:100%;
+          padding:15px;
+          margin-bottom:10px;
+          border:none;
+          border-radius:10px;
+          background:#f5f5f5;
+          text-align:left;
+          font-size:15px;
+          font-weight:bold;
+          cursor:pointer">
+
+        💳 Belum Dibayar
+
+        <span style="
+          float:right;
+          color:#999">
+
+          ›
+
+        </span>
+
+      </button>
+
+
+      <button
+        onclick="bukaPesananSayaKategori('dikemas')"
+        style="
+          width:100%;
+          padding:15px;
+          margin-bottom:10px;
+          border:none;
+          border-radius:10px;
+          background:#f5f5f5;
+          text-align:left;
+          font-size:15px;
+          font-weight:bold;
+          cursor:pointer">
+
+        📦 Dikemas
+
+        <span style="
+          float:right;
+          color:#999">
+
+          ›
+
+        </span>
+
+      </button>
+
+
+      <button
+        onclick="bukaPesananSayaKategori('dikirim')"
+        style="
+          width:100%;
+          padding:15px;
+          margin-bottom:10px;
+          border:none;
+          border-radius:10px;
+          background:#f5f5f5;
+          text-align:left;
+          font-size:15px;
+          font-weight:bold;
+          cursor:pointer">
+
+        🚚 Dikirim
+
+        <span style="
+          float:right;
+          color:#999">
+
+          ›
+
+        </span>
+
+      </button>
+
+
+      <button
+        onclick="bukaPesananSayaKategori('selesai')"
+        style="
+          width:100%;
+          padding:15px;
+          margin-bottom:10px;
+          border:none;
+          border-radius:10px;
+          background:#f5f5f5;
+          text-align:left;
+          font-size:15px;
+          font-weight:bold;
+          cursor:pointer">
+
+        ✅ Selesai
+
+        <span style="
+          float:right;
+          color:#999">
+
+          ›
+
+        </span>
+
+      </button>
+
+
+      <button
+        onclick="bukaPesananSayaKategori('pengembalian')"
+        style="
+          width:100%;
+          padding:15px;
+          margin-bottom:10px;
+          border:none;
+          border-radius:10px;
+          background:#f5f5f5;
+          text-align:left;
+          font-size:15px;
+          font-weight:bold;
+          cursor:pointer">
+
+        🔄 Pengembalian
+
+        <span style="
+          float:right;
+          color:#999">
+
+          ›
+
+        </span>
+
+      </button>
+
+
+      <button
+        onclick="bukaPesananSayaKategori('dibatalkan')"
+        style="
+          width:100%;
+          padding:15px;
+          border:none;
+          border-radius:10px;
+          background:#f5f5f5;
+          text-align:left;
+          font-size:15px;
+          font-weight:bold;
+          cursor:pointer">
+
+        ❌ Dibatalkan
+
+        <span style="
+          float:right;
+          color:#999">
+
+          ›
+
+        </span>
+
+      </button>
+
+    </div>
+
     <div id="daftarPesanan">
 
       <div class="card">
-        Memuat pesanan...
+
+        <p style="
+          text-align:center;
+          color:#777">
+
+          Pilih kategori pesanan di atas.
+
+        </p>
+
       </div>
 
     </div>
 
   `;
 
+}
+
+  async function bukaPesananSayaKategori(kategori){
+
+  const halaman =
+    document.getElementById("halaman");
+
+  if(!halaman){
+    return;
+  }
+
+  let judul = "Pesanan";
+
+  if(kategori === "belum"){
+    judul = "💳 Belum Dibayar";
+  }
+
+  else if(kategori === "dikemas"){
+    judul = "📦 Dikemas";
+  }
+
+  else if(kategori === "dikirim"){
+    judul = "🚚 Dikirim";
+  }
+
+  else if(kategori === "selesai"){
+    judul = "✅ Selesai";
+  }
+
+  else if(kategori === "pengembalian"){
+    judul = "🔄 Pengembalian";
+  }
+
+  else if(kategori === "dibatalkan"){
+    judul = "❌ Dibatalkan";
+  }
+
+
+  halaman.innerHTML = `
+
+    <div class="judul">
+      ${judul}
+    </div>
+
+    <button
+      onclick="riwayatPesanan()"
+      style="
+        border:none;
+        background:none;
+        color:#1261C9;
+        font-weight:bold;
+        font-size:14px;
+        padding:5px 0;
+        margin-bottom:10px;
+        cursor:pointer">
+
+      ← Kembali ke Pesanan Saya
+
+    </button>
+
+
+    <div id="daftarPesananKategori">
+
+      <div class="card">
+
+        <p style="
+          text-align:center;
+          color:#777">
+
+          Memuat pesanan...
+
+        </p>
+
+      </div>
+
+    </div>
+
+  `;
+
+
+  await muatPesananSayaKategori(kategori);
+
+}
+
+  async function muatPesananSayaKategori(kategori){
+
   const box =
-    document.getElementById("daftarPesanan");
+    document.getElementById(
+      "daftarPesananKategori"
+    );
+
+  if(!box){
+    return;
+  }
+
 
   if(!pengguna || !pengguna.id){
 
@@ -2147,16 +2494,634 @@ async function riwayatPesanan(){
     return;
   }
 
-  const { data: daftarOrder, error } =
-    await supabaseClient
-      .from("Orders")
-      .select("*")
-      .eq("user_id", pengguna.id)
-      .order("created_at", { ascending:false });
 
-  if(error){
+  try{
 
-    console.error(error);
+    // ==========================
+    // AMBIL PESANAN
+    // ==========================
+
+    const { data: daftarOrder, error: orderError } =
+      await supabaseClient
+        .from("Orders")
+        .select("*")
+        .eq("user_id", pengguna.id)
+        .order("created_at", {
+          ascending:false
+        });
+
+
+    if(orderError){
+
+      console.error(
+        "Gagal mengambil pesanan:",
+        orderError
+      );
+
+      box.innerHTML = `
+
+        <div class="card kosong">
+
+          <div class="icon">
+            ⚠️
+          </div>
+
+          <p>
+            Gagal memuat pesanan.
+          </p>
+
+          <p style="
+            font-size:12px;
+            color:#777">
+
+            ${escapeHTML(
+              orderError.message
+            )}
+
+          </p>
+
+        </div>
+
+      `;
+
+      return;
+    }
+
+
+    let pesananFilter =
+      daftarOrder || [];
+
+
+    // ==========================
+    // FILTER KATEGORI
+    // ==========================
+
+    if(kategori === "belum"){
+
+      pesananFilter =
+        pesananFilter.filter(function(order){
+
+          const pembayaran =
+            String(
+              order["Metode-pembayaran"] || ""
+            ).toLowerCase();
+
+          const statusPembayaran =
+            String(
+              order["Status-pembayaran"] || ""
+            ).toLowerCase();
+
+          // COD tidak masuk Belum Dibayar
+          if(pembayaran === "cod"){
+            return false;
+          }
+
+          return (
+            statusPembayaran ===
+            "belum dibayar"
+          );
+
+        });
+
+    }
+
+
+    else if(kategori === "dikemas"){
+
+      pesananFilter =
+        pesananFilter.filter(function(order){
+
+          return [
+            "Menunggu diproses",
+            "Diproses"
+          ].includes(
+            order.Status
+          );
+
+        });
+
+    }
+
+
+    else if(kategori === "dikirim"){
+
+      pesananFilter =
+        pesananFilter.filter(function(order){
+
+          return [
+            "Diserahkan ke kurir",
+            "Dalam perjalanan",
+            "Kurir menuju alamat pembeli"
+          ].includes(
+            order.Status
+          );
+
+        });
+
+    }
+
+
+    else if(kategori === "selesai"){
+
+      pesananFilter =
+        pesananFilter.filter(function(order){
+
+          return (
+            order.Status ===
+            "Pesanan telah diterima"
+          );
+
+        });
+
+    }
+
+
+    else if(kategori === "pengembalian"){
+
+      pesananFilter =
+        pesananFilter.filter(function(order){
+
+          return [
+            "Pengembalian",
+            "Dikembalikan",
+            "Pesanan dikembalikan"
+          ].includes(
+            order.Status
+          );
+
+        });
+
+    }
+
+
+    else if(kategori === "dibatalkan"){
+
+      pesananFilter =
+        pesananFilter.filter(function(order){
+
+          return (
+            order.Status ===
+            "Dibatalkan"
+          );
+
+        });
+
+    }
+
+
+    // ==========================
+    // TIDAK ADA PESANAN
+    // ==========================
+
+    if(
+      !pesananFilter ||
+      pesananFilter.length === 0
+    ){
+
+      box.innerHTML = `
+
+        <div class="card kosong">
+
+          <div class="icon">
+            📦
+          </div>
+
+          <p>
+            Belum ada pesanan pada kategori ini.
+          </p>
+
+        </div>
+
+      `;
+
+      return;
+    }
+
+
+    // ==========================
+    // AMBIL ITEM PESANAN
+    // ==========================
+
+    const orderIds =
+      pesananFilter.map(function(order){
+
+        return order.id;
+
+      });
+
+
+    const { data: itemPesanan, error: itemError } =
+      await supabaseClient
+        .from("Order_items")
+        .select("*")
+        .in(
+          "Order_id",
+          orderIds
+        );
+
+
+    if(itemError){
+
+      console.error(
+        "Gagal mengambil item:",
+        itemError
+      );
+
+      box.innerHTML = `
+
+        <div class="card kosong">
+
+          <div class="icon">
+            ⚠️
+          </div>
+
+          <p>
+            Gagal memuat produk pesanan.
+          </p>
+
+        </div>
+
+      `;
+
+      return;
+    }
+
+
+    // ==========================
+    // AMBIL PRODUK
+    // ==========================
+
+    const productIds =
+      [
+        ...new Set(
+          (itemPesanan || [])
+            .map(function(item){
+
+              return item.product_id;
+
+            })
+        )
+      ];
+
+
+    let produk = [];
+
+
+    if(productIds.length > 0){
+
+      const { data: dataProduk, error: produkError } =
+        await supabaseClient
+          .from("products")
+          .select("*")
+          .in(
+            "id",
+            productIds
+          );
+
+
+      if(produkError){
+
+        console.error(
+          "Gagal mengambil produk:",
+          produkError
+        );
+
+      }else{
+
+        produk =
+          dataProduk || [];
+
+      }
+
+    }
+
+
+    // ==========================
+    // MAP PRODUK
+    // ==========================
+
+    const produkMap = {};
+
+
+    produk.forEach(function(item){
+
+      produkMap[item.id] =
+        item;
+
+    });
+
+
+    // ==========================
+    // TAMPILKAN PESANAN
+    // ==========================
+
+   box.innerHTML =
+      pesananFilter.map(function(order){
+
+        const nomor =
+          order["Nomor-pesanan"] ||
+          order.id;
+
+
+        const items =
+          (itemPesanan || []).filter(
+            function(item){
+
+              return (
+                item.Order_id ===
+                order.id
+              );
+
+            }
+          );
+
+
+        return `
+
+          <div
+            class="card"
+            onclick="detailPesanan('${order.id}')"
+            style="
+              cursor:pointer;
+              margin-bottom:15px;
+            ">
+
+
+            <!-- HEADER PESANAN -->
+
+            <div style="
+              display:flex;
+              justify-content:space-between;
+              align-items:flex-start;
+              gap:10px">
+
+              <strong>
+
+                📦 Pesanan #${escapeHTML(
+                  nomor
+                )}
+
+              </strong>
+
+
+              <span
+                class="order-status">
+
+                ${escapeHTML(
+                  order.Status ||
+                  "-"
+                )}
+
+              </span>
+
+            </div>
+
+
+            <!-- PRODUK -->
+
+            <div style="
+              margin-top:12px">
+
+              ${
+                items.length > 0
+
+                ? items.map(function(item){
+                  const produkItem =
+                      produkMap[
+                        item.product_id
+                      ];
+
+
+                    const jumlah =
+                      Number(
+                        item.Jumlah || 0
+                      );
+
+
+                    const harga =
+                      Number(
+                        item.Harga ||
+                        produkItem?.price ||
+                        0
+                      );
+
+
+                    const subtotal =
+                      jumlah * harga;
+
+
+                    const gambar =
+                      produkItem?.image_url ||
+                      "";
+
+
+                    return `
+
+                      <div
+                        style="
+                          display:flex;
+                          gap:10px;
+                          padding:10px 0;
+                          border-top:1px solid #eee">
+
+                        ${
+                          gambar
+
+                          ? `
+
+                            <img
+                              src="${escapeHTML(
+                                gambar
+                              )}"
+                              loading="lazy"
+                              decoding="async"
+                              alt="${escapeHTML(
+                                produkItem?.name ||
+                                "Produk"
+                              )}"
+                              style="
+                                width:70px;
+                                height:70px;
+                                object-fit:cover;
+                                border-radius:8px">
+
+                                                `
+
+                          : `
+
+                            <div style="
+                              width:70px;
+                              height:70px;
+                              flex-shrink:0;
+                              display:flex;
+                              align-items:center;
+                              justify-content:center;
+                              background:#f5f5f5;
+                              border-radius:8px;
+                              font-size:28px">
+
+                              📦
+
+                            </div>
+
+                          `
+                        }
+
+
+                        <div style="
+                          flex:1">
+
+                          <div style="
+                            font-weight:bold;
+                            font-size:14px">
+
+                            ${escapeHTML(
+                              produkItem?.name ||
+                              "Produk"
+                            )}
+
+                          </div>
+
+
+                          <div style="
+                            font-size:12px;
+                            color:#777;
+                            margin-top:4px">
+
+                            Jumlah:
+                            ${jumlah}
+
+                          </div>
+
+
+                          <div style="
+                            font-size:12px;
+                            color:#777">
+
+                            Harga:
+                            ${rupiah(harga)}
+
+                          </div>
+
+
+                          <div style="
+                            font-size:13px;
+                            margin-top:3px">
+
+                            Subtotal:
+                            ${rupiah(
+                              subtotal
+                            )}
+
+                          </div>
+
+                        </div>
+
+                      </div>
+
+                    `;
+
+                  }).join("")
+
+                : `
+
+                  <div style="
+                    padding:10px 0;
+                    color:#777;
+                    font-size:13px">
+
+                    Produk pesanan tidak ditemukan.
+
+                  </div>
+
+                `
+              }
+
+            </div>
+
+
+            <!-- TANGGAL -->
+
+            ${
+              order.created_at
+
+              ? `
+
+                <div style="
+                  font-size:12px;
+                  color:#777;
+                  margin-top:8px">
+
+                  🕒 ${
+                    new Date(
+                      order.created_at
+                    ).toLocaleString(
+                      "id-ID"
+                    )
+                  }
+
+                </div>
+
+              `
+
+              : ""
+            }
+
+
+            <!-- TOTAL -->
+
+            <div style="
+              border-top:1px solid #eee;
+              margin-top:10px;
+              padding-top:10px;
+              display:flex;
+              justify-content:space-between;
+              font-weight:bold">
+
+              <span>
+                Total
+              </span>
+
+              <span style="
+                color:#1261C9">
+
+                ${rupiah(
+                  Number(
+                    order.Total || 0
+                  )
+                )}
+
+              </span>
+
+            </div>
+
+
+            <!-- PETUNJUK -->
+
+            <div style="
+              margin-top:10px;
+              color:#1261C9;
+              font-size:12px;
+              font-weight:bold">
+              👆 Ketuk untuk melihat detail pesanan
+
+            </div>
+
+
+          </div>
+
+        `;
+
+      }).join("");
+
+
+  }catch(error){
+
+    console.error(
+      "Kesalahan memuat pesanan:",
+      error
+    );
+
 
     box.innerHTML = `
 
@@ -2167,138 +3132,15 @@ async function riwayatPesanan(){
         </div>
 
         <p>
-          Gagal memuat pesanan.
-        </p>
-
-        <p style="font-size:12px;color:#777">
-          ${error.message}
+          Terjadi kesalahan saat
+          memuat pesanan.
         </p>
 
       </div>
 
     `;
 
-    return;
   }
-
-  if(!daftarOrder || daftarOrder.length === 0){
-
-    box.innerHTML = `
-
-      <div class="card kosong">
-
-        <div class="icon">
-          📦
-        </div>
-
-        <p>
-          Belum ada pesanan.
-        </p>
-
-        <button
-          class="checkout"
-          onclick="beranda()">
-
-          Mulai Belanja
-
-        </button>
-
-      </div>
-
-    `;
-
-    return;
-  }
-
-  box.innerHTML =
-    daftarOrder.map(function(order){
-
-      const nomor =
-        order["Nomor-pesanan"] ||
-        order.id;
-
-      const status =
-        order.Status ||
-        "Menunggu diproses";
-
-      return `
-
-        <div
-          class="card"
-          onclick="detailPesanan('${order.id}')"
-          style="
-            cursor:pointer;
-            margin-bottom:15px;
-          "
-        >
-
-          <div style="
-            display:flex;
-            justify-content:space-between;
-            align-items:flex-start;
-            gap:10px;
-          ">
-
-            <strong>
-              📦 Pesanan #${nomor}
-            </strong>
-
-            <span class="order-status">
-              ${status}
-            </span>
-
-          </div>
-
-          <div style="
-            font-size:12px;
-            color:#777;
-            margin-top:10px;
-          ">
-
-            ${order.created_at
-              ? new Date(order.created_at)
-                  .toLocaleString("id-ID")
-              : ""}
-
-          </div>
-
-          <div style="
-            margin-top:12px;
-            color:#1261c9;
-            font-size:13px;
-            font-weight:bold;
-          ">
-
-            👆 Ketuk untuk melihat detail pesanan
-
-          </div>
-
-          <div style="
-            border-top:1px solid #eee;
-            margin-top:10px;
-            padding-top:10px;
-            display:flex;
-            justify-content:space-between;
-            font-weight:bold;
-          ">
-
-            <span>
-              Total
-            </span>
-
-            <span style="color:#1261c9">
-
-              ${rupiah(Number(order.Total || 0))}
-
-            </span>
-
-          </div>
-
-        </div>
-
-      `;
-
-    }).join("");
 
 }
 
