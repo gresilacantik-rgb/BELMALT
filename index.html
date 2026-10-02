@@ -3153,12 +3153,22 @@ async function tokoSaya(){
         .maybeSingle();
 
     if(error){
+
       console.error("Error toko:", error);
-      pesan("Gagal memeriksa toko: " + error.message);
+
+      pesan(
+        "Gagal memeriksa toko: " +
+        error.message
+      );
+
       return;
     }
 
-    // Jika belum punya toko
+
+    // ==============================
+    // BELUM PUNYA TOKO
+    // ==============================
+
     if(!toko){
 
       document.getElementById("halaman").innerHTML = `
@@ -3171,9 +3181,14 @@ async function tokoSaya(){
 
           <h3>Buka Toko Kamu</h3>
 
-          <p style="font-size:13px;color:#777">
+          <p style="
+            font-size:13px;
+            color:#777">
+
             Kamu belum memiliki toko.
-            Buka toko untuk mulai menjual produk di BELMALT.
+            Buka toko untuk mulai menjual
+            produk di BELMALT.
+
           </p>
 
           <button
@@ -3191,40 +3206,44 @@ async function tokoSaya(){
       return;
     }
 
-    // Jika sudah punya toko
+
+    // ==============================
+    // TOKO SUDAH ADA
+    // ==============================
+
     document.getElementById("halaman").innerHTML = `
 
       <div class="judul">
-        🏪 ${escapeHTML(toko.name || "Toko Saya")}
+        🏪 Toko Saya
       </div>
 
-      <div class="card">
 
-        <h3>🏪 Profil Toko</h3>
+      <!-- ==========================
+           PROFIL TOKO
+      =========================== -->
+
+      <div class="card"
+        style="
+          text-align:center;
+          padding:20px">
 
         ${
           toko.logo_url
           ? `
-            <div style="
-              text-align:center;
-              margin-bottom:15px">
-
-              <img
-                src="${escapeHTML(toko.logo_url)}"
-                alt="Logo toko"
-                style="
-                  width:100px;
-                  height:100px;
-                  object-fit:cover;
-                  border-radius:50%;
-                  border:1px solid #ddd">
-
-            </div>
+            <img
+              src="${escapeHTML(toko.logo_url)}"
+              alt="Logo toko"
+              style="
+                width:100px;
+                height:100px;
+                object-fit:cover;
+                border-radius:50%;
+                border:1px solid #ddd;
+                margin-bottom:10px">
           `
           : `
             <div style="
-              text-align:center;
-              font-size:60px;
+              font-size:70px;
               margin-bottom:10px">
 
               🏪
@@ -3233,89 +3252,574 @@ async function tokoSaya(){
           `
         }
 
-        <p>
-          <strong>Nama:</strong>
-          ${escapeHTML(toko.name || "-")}
+
+        <h2 style="
+          margin:5px 0;
+          font-size:20px">
+
+          ${escapeHTML(
+            toko.name || "Toko Saya"
+          )}
+
+        </h2>
+
+
+        <p style="
+          margin:5px 0;
+          color:#777;
+          font-size:13px">
+
+          📍 ${escapeHTML(
+            toko.location || "-"
+          )}
+
         </p>
 
-        <p>
-          <strong>📍 Lokasi:</strong>
-          ${escapeHTML(toko.location || "-")}
+
+        <p style="
+          margin:5px 0;
+          color:#777;
+          font-size:13px">
+
+          📱 ${escapeHTML(
+            toko.phone || "-"
+          )}
+
         </p>
 
-        <p>
-          <strong>📱 WhatsApp:</strong>
-          ${escapeHTML(toko.phone || "-")}
-        </p>
 
-        <p>
-          <strong>📝 Deskripsi:</strong>
-          ${escapeHTML(toko.description || "-")}
-        </p>
+        ${
+          toko.description
+          ? `
+            <p style="
+              margin:10px 0 0;
+              color:#666;
+              font-size:13px">
+
+              ${escapeHTML(
+                toko.description
+              )}
+
+            </p>
+          `
+          : ""
+        }
+
+      </div>
+
+
+      <!-- ==========================
+           MENU TOKO
+      =========================== -->
+
+      <div class="card">
+
+        <h3 style="margin-top:0">
+          🏪 Menu Toko
+        </h3>
+
+
+        <!-- EDIT PROFIL -->
 
         <button
-          class="checkout"
-          onclick="editProfilToko()">
+          onclick="editProfilToko()"
+          style="
+            width:100%;
+            padding:15px;
+            margin-top:8px;
+            border:none;
+            border-radius:10px;
+            background:#f5f5f5;
+            text-align:left;
+            font-size:15px;
+            font-weight:bold;
+            cursor:pointer">
 
           ✏️ Edit Profil Toko
 
+          <span style="
+            float:right;
+            color:#999">
+
+            ›
+
+          </span>
+
         </button>
 
-      </div>
 
-      <div class="card">
-
-        <h3>Kelola Produk</h3>
-
-        <p style="font-size:13px;color:#777">
-          Tambahkan dan kelola produk yang kamu jual di BELMALT.
-        </p>
+        <!-- KELOLA PRODUK -->
 
         <button
-          class="checkout"
-          onclick="tambahProduk()">
+          onclick="tambahProduk()"
+          style="
+            width:100%;
+            padding:15px;
+            margin-top:10px;
+            border:none;
+            border-radius:10px;
+            background:#f5f5f5;
+            text-align:left;
+            font-size:15px;
+            font-weight:bold;
+            cursor:pointer">
 
-          ➕ Tambah Produk
+          ➕ Kelola Produk
+
+          <span style="
+            float:right;
+            color:#999">
+
+            ›
+
+          </span>
 
         </button>
 
-      </div>
 
-      <div class="card">
+        <!-- PRODUK SAYA -->
 
-        <h3>📦 Produk Saya</h3>
+        <button
+          onclick="bukaProdukSaya()"
+          style="
+            width:100%;
+            padding:15px;
+            margin-top:10px;
+            border:none;
+            border-radius:10px;
+            background:#f5f5f5;
+            text-align:left;
+            font-size:15px;
+            font-weight:bold;
+            cursor:pointer">
 
-        <div id="produkSaya">
-          Memuat produk...
-        </div>
+          📦 Produk Saya
 
-      </div>
+          <span style="
+            float:right;
+            color:#999">
 
-      <div class="card">
+            ›
 
-        <h3>📦 Pesanan Masuk</h3>
+          </span>
 
-        <div id="pesananMasuk">
-          Memuat pesanan...
-        </div>
+        </button>
+
+
+        <!-- PESANAN MASUK -->
+
+        <button
+          onclick="bukaPesananMasuk()"
+          style="
+            width:100%;
+            padding:15px;
+            margin-top:10px;
+            border:none;
+            border-radius:10px;
+            background:#f5f5f5;
+            text-align:left;
+            font-size:15px;
+            font-weight:bold;
+            cursor:pointer">
+
+          🛍️ Pesanan Masuk
+
+          <span style="
+            float:right;
+            color:#999">
+
+            ›
+
+          </span>
+
+        </button>
 
       </div>
 
     `;
 
-    if(typeof muatProdukSaya === "function"){
-      muatProdukSaya();
-    }
-
-    if(typeof muatPesananMasuk === "function"){
-      muatPesananMasuk();
-    }
-
   }catch(error){
 
-    console.error("Kesalahan Toko Saya:", error);
+    console.error(
+      "Kesalahan Toko Saya:",
+      error
+    );
 
-    pesan("Terjadi kesalahan saat membuka Toko Saya");
+    pesan(
+      "Terjadi kesalahan saat membuka Toko Saya"
+    );
+
+  }
+
+}
+
+  function bukaProdukSaya(){
+
+  document.getElementById("halaman").innerHTML = `
+
+    <div class="judul">
+      📦 Produk Saya
+    </div>
+
+    <button
+      onclick="tokoSaya()"
+      style="
+        border:none;
+        background:none;
+        color:#1261C9;
+        font-weight:bold;
+        font-size:14px;
+        padding:5px 0;
+        margin-bottom:10px;
+        cursor:pointer">
+
+      ← Kembali ke Toko Saya
+
+    </button>
+
+    <div class="card">
+
+      <div id="produkSaya">
+        Memuat produk...
+      </div>
+
+    </div>
+
+  `;
+
+  if(typeof muatProdukSaya === "function"){
+
+    muatProdukSaya();
+
+  }
+
+}
+
+function bukaPesananMasuk(){
+
+  document.getElementById("halaman").innerHTML = `
+
+    <div class="judul">
+      🛍️ Pesanan Masuk
+    </div>
+
+
+    <button
+      onclick="tokoSaya()"
+      style="
+        border:none;
+        background:none;
+        color:#1261C9;
+        font-weight:bold;
+        font-size:14px;
+        padding:5px 0;
+        margin-bottom:10px;
+        cursor:pointer">
+
+      ← Kembali ke Toko Saya
+
+    </button>
+
+
+    <!-- ==========================
+         MENU PESANAN
+    =========================== -->
+
+    <div class="card">
+
+      <h3 style="margin-top:0">
+        📋 Menu Pesanan
+      </h3>
+
+
+      <button
+        onclick="bukaPesananKategori('baru')"
+        style="
+          width:100%;
+          padding:14px;
+          margin-top:8px;
+          border:none;
+          border-radius:10px;
+          background:#f5f5f5;
+          text-align:left;
+          font-size:14px;
+          font-weight:bold;
+          cursor:pointer">
+
+        🆕 Pesanan Baru
+
+        <span style="
+          float:right;
+          color:#999">
+
+          ›
+
+        </span>
+
+      </button>
+
+
+      <button
+        onclick="bukaPesananKategori('diproses')"
+        style="
+          width:100%;
+          padding:14px;
+          margin-top:8px;
+          border:none;
+          border-radius:10px;
+          background:#f5f5f5;
+          text-align:left;
+          font-size:14px;
+          font-weight:bold;
+          cursor:pointer">
+
+        ⚙️ Pesanan Diproses
+
+        <span style="
+          float:right;
+          color:#999">
+
+          ›
+
+        </span>
+
+      </button>
+
+
+      <button
+        onclick="bukaPesananKategori('kurir')"
+        style="
+          width:100%;
+          padding:14px;
+          margin-top:8px;
+          border:none;
+          border-radius:10px;
+          background:#f5f5f5;
+          text-align:left;
+          font-size:14px;
+          font-weight:bold;
+          cursor:pointer">
+
+        🚚 Diserahkan ke Kurir
+
+        <span style="
+          float:right;
+          color:#999">
+
+          ›
+
+        </span>
+
+      </button>
+
+
+      <button
+        onclick="bukaPesananKategori('pengiriman')"
+        style="
+          width:100%;
+          padding:14px;
+          margin-top:8px;
+          border:none;
+          border-radius:10px;
+          background:#f5f5f5;
+          text-align:left;
+          font-size:14px;
+          font-weight:bold;
+          cursor:pointer">
+
+        🛵 Dalam Pengiriman
+
+        <span style="
+          float:right;
+          color:#999">
+
+          ›
+
+        </span>
+
+      </button>
+
+
+      <button
+        onclick="bukaPesananKategori('selesai')"
+        style="
+          width:100%;
+          padding:14px;
+          margin-top:8px;
+          border:none;
+          border-radius:10px;
+          background:#f5f5f5;
+          text-align:left;
+          font-size:14px;
+          font-weight:bold;
+          cursor:pointer">
+
+        ✅ Pesanan Selesai
+
+        <span style="
+          float:right;
+          color:#999">
+
+          ›
+
+        </span>
+
+      </button>
+
+
+      <button
+        onclick="bukaPesananKategori('dibatalkan')"
+        style="
+          width:100%;
+          padding:14px;
+          margin-top:8px;
+          border:none;
+          border-radius:10px;
+          background:#f5f5f5;
+          text-align:left;
+          font-size:14px;
+          font-weight:bold;
+          cursor:pointer">
+
+        ❌ Pesanan Dibatalkan
+
+        <span style="
+          float:right;
+          color:#999">
+
+          ›
+
+        </span>
+
+      </button>
+
+    </div>
+
+
+    <!-- ==========================
+         DAFTAR PESANAN
+    =========================== -->
+
+    <div class="card">
+
+      <div id="pesananMasuk">
+
+        <p style="
+          text-align:center;
+          color:#777;
+          font-size:13px">
+
+          Pilih menu pesanan di atas.
+
+        </p>
+
+      </div>
+
+    </div>
+
+  `;
+
+}
+
+  async function bukaPesananKategori(kategori){
+
+  const wadah =
+    document.getElementById("halaman");
+
+  if(!wadah){
+    return;
+  }
+
+  let judul = "Pesanan";
+
+  if(kategori === "baru"){
+    judul = "🆕 Pesanan Baru";
+  }
+
+  else if(kategori === "diproses"){
+    judul = "⚙️ Pesanan Diproses";
+  }
+
+  else if(kategori === "kurir"){
+    judul = "🚚 Diserahkan ke Kurir";
+  }
+
+  else if(kategori === "pengiriman"){
+    judul = "🛵 Dalam Pengiriman";
+  }
+
+  else if(kategori === "selesai"){
+    judul = "✅ Pesanan Selesai";
+  }
+
+  else if(kategori === "dibatalkan"){
+    judul = "❌ Pesanan Dibatalkan";
+  }
+
+
+  wadah.innerHTML = `
+
+    <div class="judul">
+      ${judul}
+    </div>
+
+
+    <button
+      onclick="bukaPesananMasuk()"
+      style="
+        border:none;
+        background:none;
+        color:#1261C9;
+        font-weight:bold;
+        font-size:14px;
+        padding:5px 0;
+        margin-bottom:10px;
+        cursor:pointer">
+
+      ← Kembali ke Pesanan Masuk
+
+    </button>
+
+
+    <div class="card">
+
+      <div id="pesananKategori">
+
+        <p style="
+          text-align:center;
+          color:#777">
+
+          Memuat pesanan...
+
+        </p>
+
+      </div>
+
+    </div>
+
+  `;
+
+
+  // Untuk sementara kita tampilkan pesan
+  // bahwa kategori siap digunakan.
+
+  const hasil =
+    document.getElementById("pesananKategori");
+
+  if(hasil){
+
+    hasil.innerHTML = `
+
+      <p style="
+        text-align:center;
+        color:#777;
+        font-size:13px">
+
+        Memuat ${judul}...
+
+      </p>
+
+    `;
 
   }
 
