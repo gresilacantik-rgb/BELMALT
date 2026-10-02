@@ -3721,7 +3721,7 @@ function bukaPesananMasuk(){
 
 }
 
-  async function bukaPesananKategori(kategori){
+async function bukaPesananKategori(kategori){
 
   const wadah =
     document.getElementById("halaman");
@@ -3730,38 +3730,87 @@ function bukaPesananMasuk(){
     return;
   }
 
+
   let judul = "Pesanan";
+  let statusFilter = [];
+
+
+  // ==========================
+  // KATEGORI
+  // ==========================
 
   if(kategori === "baru"){
+
     judul = "🆕 Pesanan Baru";
+
+    statusFilter = [
+      "Menunggu diproses"
+    ];
+
   }
 
   else if(kategori === "diproses"){
+
     judul = "⚙️ Pesanan Diproses";
+
+    statusFilter = [
+      "Diproses"
+    ];
+
   }
 
   else if(kategori === "kurir"){
+
     judul = "🚚 Diserahkan ke Kurir";
+
+    statusFilter = [
+      "Diserahkan ke kurir"
+    ];
+
   }
 
   else if(kategori === "pengiriman"){
+
     judul = "🛵 Dalam Pengiriman";
+
+    statusFilter = [
+      "Dalam perjalanan",
+      "Kurir menuju alamat pembeli"
+    ];
+
   }
 
   else if(kategori === "selesai"){
+
     judul = "✅ Pesanan Selesai";
+
+    statusFilter = [
+      "Pesanan telah diterima"
+    ];
+
   }
 
   else if(kategori === "dibatalkan"){
+
     judul = "❌ Pesanan Dibatalkan";
+
+    statusFilter = [
+      "Dibatalkan"
+    ];
+
   }
 
+
+  // ==========================
+  // TAMPILKAN HALAMAN
+  // ==========================
 
   wadah.innerHTML = `
 
     <div class="judul">
       ${judul}
     </div>
+
 
     <button
       onclick="bukaPesananMasuk()"
@@ -3778,6 +3827,7 @@ function bukaPesananMasuk(){
       ← Kembali ke Pesanan Masuk
 
     </button>
+
 
     <div class="card">
 
@@ -3798,17 +3848,9 @@ function bukaPesananMasuk(){
   `;
 
 
-  // ==========================
-  // KHUSUS PESANAN BARU
-  // ==========================
-
-  if(kategori !== "baru"){
-    return;
-  }
-
-
   const hasil =
     document.getElementById("pesananKategori");
+
 
   if(!hasil){
     return;
@@ -3818,6 +3860,7 @@ function bukaPesananMasuk(){
   if(!pengguna || !pengguna.id){
 
     hasil.innerHTML = `
+
       <p style="
         text-align:center;
         color:#777">
@@ -3825,6 +3868,7 @@ function bukaPesananMasuk(){
         Silakan login terlebih dahulu.
 
       </p>
+
     `;
 
     return;
@@ -3833,7 +3877,11 @@ function bukaPesananMasuk(){
 
   try{
 
-    // Cari toko penjual
+
+    // ==========================
+    // CARI TOKO PENJUAL
+    // ==========================
+
     const { data: toko, error: tokoError } =
       await supabaseClient
         .from("shops")
@@ -3876,11 +3924,14 @@ function bukaPesananMasuk(){
     }
 
 
-    // Ambil produk milik toko
+    // ==========================
+    // AMBIL PRODUK TOKO
+    // ==========================
+
     const { data: produk, error: produkError } =
       await supabaseClient
         .from("products")
-        .select("id")
+        .select("*")
         .eq("shop_id", toko.id);
 
 
@@ -3893,7 +3944,7 @@ function bukaPesananMasuk(){
           text-align:center;
           color:#d00">
 
-          Gagal mencari produk toko.
+          Gagal mengambil produk toko.
 
         </p>
       `;
@@ -3922,7 +3973,10 @@ function bukaPesananMasuk(){
       produk.map(item => item.id);
 
 
-    // Cari item pesanan yang berisi produk toko
+    // ==========================
+    // AMBIL ITEM PESANAN
+    // ==========================
+
     const { data: itemPesanan, error: itemError } =
       await supabaseClient
         .from("Order_items")
@@ -3939,7 +3993,7 @@ function bukaPesananMasuk(){
           text-align:center;
           color:#d00">
 
-          Gagal memuat item pesanan.
+          Gagal mengambil item pesanan.
 
         </p>
       `;
@@ -3955,7 +4009,7 @@ function bukaPesananMasuk(){
           text-align:center;
           color:#777">
 
-          Belum ada pesanan baru.
+          Belum ada pesanan.
 
         </p>
       `;
@@ -3964,22 +4018,57 @@ function bukaPesananMasuk(){
     }
 
 
+    // ==========================
+    // ID PESANAN
+    // ==========================
+
     const orderIds =
       [...new Set(
-        itemPesanan.map(item => item.Order_id)
+        itemPesanan.map(
+          item => item.Order_id
+        )
       )];
 
 
-    // Ambil pesanan
-    const { data: pesanan, error: orderError } =
-      await supabaseClient
+    // ==========================
+    // AMBIL PESANAN
+    // ==========================
+
+    let query =
+      supabaseClient
         .from("Orders")
         .select("*")
-        .in("id", orderIds)
-        .eq("Status", "Menunggu diproses")
-        .order("id", {
+        .in("id", orderIds);
+
+
+    if(statusFilter.length === 1){
+
+      query =
+        query.eq(
+          "Status",
+          statusFilter[0]
+        );
+
+    }
+
+    else if(statusFilter.length > 1){
+
+      query =
+        query.in(
+          "Status",
+          statusFilter
+        );
+
+    }
+
+
+    const { data: pesanan, error: orderError } =
+      await query.order(
+        "id",
+        {
           ascending:false
-        });
+        }
+      );
 
 
     if(orderError){
@@ -4003,219 +4092,498 @@ function bukaPesananMasuk(){
     if(!pesanan || pesanan.length === 0){
 
       hasil.innerHTML = `
-        <p style="
+
+        <div style="
           text-align:center;
+          padding:20px;
           color:#777">
 
-          Tidak ada pesanan baru.
+          <div style="
+            font-size:40px;
+            margin-bottom:10px">
 
-        </p>
+            📦
+
+          </div>
+
+          <p>
+            Tidak ada pesanan pada kategori ini.
+          </p>
+
+        </div>
+
       `;
 
       return;
     }
 
 
-    // Ambil semua produk lengkap
-    const { data: produkLengkap } =
-      await supabaseClient
-        .from("products")
-        .select("*")
-        .in("id", productIds);
-
+    // ==========================
+    // MAP PRODUK
+    // ==========================
 
     const produkMap = {};
 
-    (produkLengkap || []).forEach(item => {
+
+    produk.forEach(item => {
 
       produkMap[item.id] = item;
 
     });
 
 
-    // Tampilkan pesanan
-    hasil.innerHTML = pesanan.map(order => {
+    // ==========================
+    // TAMPILKAN PESANAN
+    // ==========================
 
-      const items =
-        itemPesanan.filter(
-          item =>
-            item.Order_id === order.id
-        );
+    hasil.innerHTML =
+      pesanan.map(order => {
 
 
-      return `
-
-        <div class="card"
-          style="
-            margin-bottom:12px;
-            border:1px solid #eee">
-
-          <h3 style="
-            margin-top:0">
-
-            🧾 Pesanan
-
-          </h3>
+        const items =
+          itemPesanan.filter(
+            item =>
+              item.Order_id === order.id
+          );
 
 
-          <p style="
-            font-size:13px">
+        // ==========================
+        // TOMBOL PENJUAL
+        // ==========================
 
-            <strong>No. Pesanan:</strong>
-            ${escapeHTML(
-              order["Nomor-pesanan"] ||
-              order.id ||
-              "-"
-            )}
-
-          </p>
+        let tombolProses = "";
 
 
-          ${
-            items.map(item => {
+        if(order.Status === "Menunggu diproses"){
 
-              const produk =
-                produkMap[item.product_id];
+          tombolProses = `
 
-              return `
+            <button
+              class="checkout"
+              onclick="
+                prosesPesananPenjual(
+                  '${order.id}',
+                  'Diproses',
+                  '${kategori}'
+                )
+              ">
 
-                <div style="
-                  display:flex;
-                  gap:10px;
-                  padding:10px 0;
-                  border-top:1px solid #eee">
+              ▶️ Proses Pesanan
 
-                  ${
-                    produk && produk.image_url
-                    ? `
-                      <img
-                        src="${escapeHTML(
-                          produk.image_url
-                        )}"
-                        style="
+            </button>
+
+          `;
+
+        }
+
+
+        else if(order.Status === "Diproses"){
+
+          tombolProses = `
+
+            <button
+              class="checkout"
+              onclick="
+                prosesPesananPenjual(
+                  '${order.id}',
+                  'Diserahkan ke kurir',
+                  '${kategori}'
+                )
+              ">
+
+              🚚 Serahkan ke Jasa Kurir
+
+            </button>
+
+          `;
+
+        }
+
+
+        else if(
+          order.Status ===
+          "Diserahkan ke kurir"
+        ){
+
+          tombolProses = `
+
+            <div style="
+              margin-top:10px;
+              padding:12px;
+              border-radius:10px;
+              background:#f5f5f5;
+              text-align:center;
+              color:#666;
+              font-size:13px">
+
+              🚚 Pesanan telah diserahkan
+              ke kurir
+
+            </div>
+
+          `;
+
+        }
+
+
+        return `
+
+          <div class="card"
+            style="
+              margin-bottom:12px;
+              border:1px solid #eee">
+
+
+            <h3 style="
+              margin-top:0">
+
+              🧾 Pesanan
+
+            </h3>
+
+
+            <p style="
+              font-size:13px">
+
+              <strong>No. Pesanan:</strong><br>
+
+              ${escapeHTML(
+                order["Nomor-pesanan"] ||
+                order.id ||
+                "-"
+              )}
+
+            </p>
+
+
+            <p style="
+              color:#1261C9;
+              font-weight:bold">
+
+              Status:
+              ${escapeHTML(
+                order.Status || "-"
+              )}
+
+            </p>
+
+
+            <!-- PRODUK -->
+
+            ${
+              items.map(item => {
+
+                const produkItem =
+                  produkMap[
+                    item.product_id
+                  ];
+
+
+                const jumlah =
+                  Number(
+                    item.Jumlah || 0
+                  );
+
+
+                const harga =
+                  Number(
+                    item.Harga ||
+                    produkItem?.price ||
+                    0
+                  );
+
+
+                const subtotal =
+                  jumlah * harga;
+
+
+                return `
+
+                  <div style="
+                    display:flex;
+                    gap:10px;
+                    padding:10px 0;
+                    border-top:1px solid #eee">
+
+                    ${
+                      produkItem &&
+                      produkItem.image_url
+
+                      ? `
+
+                        <img
+                          src="${escapeHTML(
+                            produkItem.image_url
+                          )}"
+                          style="
+                            width:65px;
+                            height:65px;
+                            object-fit:cover;
+                            border-radius:8px">
+
+                      `
+
+                      : `
+
+                        <div style="
                           width:65px;
                           height:65px;
-                          object-fit:cover;
-                          border-radius:8px">
-                    `
-                    : `
-                      <div style="
-                        width:65px;
-                        height:65px;
-                        display:flex;
-                        align-items:center;
-                        justify-content:center;
-                        background:#f5f5f5;
-                        border-radius:8px;
-                        font-size:28px">
+                          display:flex;
+                          align-items:center;
+                          justify-content:center;
+                          background:#f5f5f5;
+                          border-radius:8px;
+                          font-size:28px">
 
-                        📦
+                          📦
+
+                        </div>
+
+                      `
+                    }
+
+
+                    <div style="
+                      flex:1">
+
+                      <strong>
+
+                        ${escapeHTML(
+                          produkItem?.name ||
+                          "Produk"
+                        )}
+
+                      </strong>
+
+
+                      <div style="
+                        font-size:13px;
+                        color:#777;
+                        margin-top:4px">
+
+                        Jumlah:
+                        ${jumlah}
 
                       </div>
-                    `
-                  }
 
-                  <div>
 
-                    <strong>
-                      ${escapeHTML(
-                        produk?.name ||
-                        "Produk"
-                      )}
-                    </strong>
+                      <div style="
+                        font-size:13px;
+                        color:#777">
 
-                    <div style="
-                      font-size:13px;
-                      color:#777;
-                      margin-top:4px">
+                        Harga satuan:
+                        Rp ${harga.toLocaleString(
+                          "id-ID"
+                        )}
 
-                      Jumlah:
-                      ${item.Jumlah || 0}
+                      </div>
 
-                    </div>
 
-                    <div style="
-                      font-size:13px;
-                      color:#777">
+                      <div style="
+                        font-size:13px;
+                        font-weight:bold;
+                        margin-top:3px">
 
-                      Harga:
-                      Rp ${Number(
-                        item.Harga ||
-                        produk?.price ||
-                        0
-                      ).toLocaleString("id-ID")}
+                        Subtotal:
+                        Rp ${subtotal.toLocaleString(
+                          "id-ID"
+                        )}
+
+                      </div>
 
                     </div>
 
                   </div>
 
-                </div>
+                `;
 
-              `;
-
-            }).join("")
-          }
+              }).join("")
+            }
 
 
-          <p style="
-            font-size:13px">
+            <!-- ALAMAT -->
 
-            📍 <strong>Alamat:</strong><br>
+            <p style="
+              font-size:13px;
+              margin-top:12px">
 
-            ${escapeHTML(
-              order.Alamat || "-"
-            )}
+              📍 <strong>Alamat Pembeli:</strong><br>
 
-          </p>
+              ${escapeHTML(
+                order.Alamat || "-"
+              )}
 
-
-          <p style="
-            font-weight:bold">
-
-            💰 Total:
-            Rp ${Number(
-              order.Total || 0
-            ).toLocaleString("id-ID")}
-
-          </p>
+            </p>
 
 
-          <button
-            class="checkout"
-            onclick="bukaDetailPesananPenjual('${order.id}')">
+            <!-- PEMBAYARAN -->
 
-            👁️ Lihat Detail Pesanan
+            <p style="
+              font-size:13px">
 
-          </button>
+              💳 <strong>Pembayaran:</strong>
+
+              ${escapeHTML(
+                order["Metode-pembayaran"] ||
+                "-"
+              )}
+
+            </p>
 
 
-        </div>
+            <!-- ONGKIR -->
 
-      `;
+            ${
+              order.Ongkir !== undefined &&
+              order.Ongkir !== null
 
-    }).join("");
+              ? `
+
+                <p style="
+                  font-size:13px">
+
+                  🚚 <strong>Ongkir:</strong>
+
+                  Rp ${Number(
+                    order.Ongkir || 0
+                  ).toLocaleString(
+                    "id-ID"
+                  )}
+
+                </p>
+
+              `
+
+              : ""
+            }
+
+
+            <!-- TOTAL -->
+
+            <p style="
+              font-size:16px;
+              font-weight:bold">
+
+              💰 Total Pesanan:
+
+              Rp ${Number(
+                order.Total || 0
+              ).toLocaleString(
+                "id-ID"
+              )}
+
+            </p>
+
+
+            <!-- TOMBOL PENJUAL -->
+
+            ${tombolProses}
+
+
+          </div>
+
+        `;
+
+      }).join("");
 
 
   }catch(error){
 
     console.error(
-      "Error pesanan kategori:",
+      "Error kategori pesanan:",
       error
     );
 
+
     hasil.innerHTML = `
+
       <p style="
         text-align:center;
         color:#d00">
 
-        Terjadi kesalahan saat memuat pesanan.
+        Terjadi kesalahan saat
+        memuat pesanan.
 
       </p>
+
     `;
 
   }
 
+}
+
+  async function prosesPesananPenjual(
+  orderId,
+  statusBaru,
+  kategori
+){
+
+  if(!orderId || !statusBaru){
+    return;
   }
+
+
+  const konfirmasi =
+    confirm(
+      "Ubah status pesanan menjadi:\n\n" +
+      statusBaru +
+      "?"
+    );
+
+
+  if(!konfirmasi){
+    return;
+  }
+
+
+  try{
+
+    const { error } =
+      await supabaseClient
+        .from("Orders")
+        .update({
+          Status: statusBaru
+        })
+        .eq("id", orderId);
+
+
+    if(error){
+
+      console.error(
+        "Gagal mengubah status:",
+        error
+      );
+
+      pesan(
+        "Gagal mengubah status pesanan: " +
+        error.message
+      );
+
+      return;
+    }
+
+
+    pesan(
+      "Status pesanan berhasil diubah menjadi " +
+      statusBaru
+    );
+
+
+    // Muat ulang kategori yang sedang dibuka
+    bukaPesananKategori(kategori);
+
+
+  }catch(error){
+
+    console.error(error);
+
+    pesan(
+      "Terjadi kesalahan saat memproses pesanan."
+    );
+
+  }
+
+}
 
   async function editProfilToko(){
 
