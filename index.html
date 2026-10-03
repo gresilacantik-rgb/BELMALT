@@ -4112,6 +4112,298 @@ behavior:"smooth"
 
 }
 
+  async function bukaChatDenganPenjual(penjualId, namaPenjual){
+
+  if(!pengguna || !pengguna.id){
+    pesan("Silakan login terlebih dahulu");
+    return;
+  }
+
+  if(!penjualId){
+    pesan("Penjual tidak ditemukan");
+    return;
+  }
+
+  if(String(penjualId) === String(pengguna.id)){
+    pesan("Anda tidak dapat mengirim chat ke diri sendiri");
+    return;
+  }
+
+  const halaman =
+    document.getElementById("halaman");
+
+  if(!halaman){
+    return;
+  }
+
+  halaman.innerHTML = `
+
+    <div class="judul">
+      💬 Chat dengan ${escapeHTML(
+        namaPenjual || "Penjual"
+      )}
+    </div>
+
+    <button
+      onclick="chat()"
+      style="
+        border:none;
+        background:none;
+        color:#1261C9;
+        font-weight:bold;
+        font-size:14px;
+        padding:5px 0;
+        margin-bottom:10px">
+
+      ← Kembali ke Chat
+
+    </button>
+
+    <div
+      id="daftarPesanChat"
+      class="card"
+      style="
+        min-height:300px;
+        max-height:450px;
+        overflow-y:auto">
+
+      <p style="
+        text-align:center;
+        color:#777">
+
+        Memuat chat...
+
+      </p>
+
+    </div>
+
+    <div
+      class="card"
+      style="
+        display:flex;
+        gap:8px;
+        align-items:center">
+
+      <input
+        id="inputPesanChat"
+        type="text"
+        placeholder="Tulis pesan..."
+        maxlength="1000"
+        style="
+          flex:1;
+          padding:12px;
+          border:1px solid #ddd;
+          border-radius:10px">
+
+      <button
+        onclick="kirimPesanChat('${String(penjualId)}')"
+        style="
+          border:none;
+          background:#1261C9;
+          color:white;
+          padding:12px 16px;
+          border-radius:10px;
+          font-weight:bold">
+
+        ➤
+
+      </button>
+
+    </div>
+
+  `;
+
+}
+
+ async function kirimPesanChat(penjualId){
+
+  if(!pengguna || !pengguna.id){
+    pesan("Silakan login terlebih dahulu");
+    return;
+  }
+
+  if(!penjualId){
+    pesan("Penjual tidak ditemukan");
+    return;
+  }
+
+  const input =
+    document.getElementById("inputPesanChat");
+
+  if(!input){
+    return;
+  }
+
+  const teks =
+    input.value.trim();
+
+  if(!teks){
+    pesan("Tulis pesan terlebih dahulu");
+    return;
+  }
+
+  const { error } =
+    await supabaseClient
+      .from("messages")
+      .insert({
+        sender_id: pengguna.id,
+        receiver_id: penjualId,
+        pesan: teks
+      });
+
+  if(error){
+
+    console.error(
+      "Gagal mengirim pesan:",
+      error
+    );
+
+    pesan(
+      "Pesan gagal dikirim: " +
+      error.message
+    );
+
+    return;
+  }
+
+  input.value = "";
+
+  await muatPesanChat(penjualId);
+
+} 
+
+  async function muatPesanChat(penjualId){
+
+  const box =
+    document.getElementById(
+      "daftarPesanChat"
+    );
+
+  if(!box){
+    return;
+  }
+
+  if(!pengguna || !pengguna.id){
+    return;
+  }
+
+  const { data, error } =
+    await supabaseClient
+      .from("messages")
+      .select("*")
+      .or(
+        `and(sender_id.eq.${pengguna.id},receiver_id.eq.${penjualId}),and(sender_id.eq.${penjualId},receiver_id.eq.${pengguna.id})`
+      )
+      .order("dibuat_pada", {
+        ascending:true
+      });
+
+  if(error){
+
+    console.error(
+      "Gagal memuat chat:",
+      error
+    );
+
+    box.innerHTML = `
+      <p style="
+        text-align:center;
+        color:#d32f2f">
+
+        Gagal memuat pesan.
+
+      </p>
+    `;
+
+    return;
+  }
+
+  if(!data || data.length === 0){
+
+    box.innerHTML = `
+      <p style="
+        text-align:center;
+        color:#777;
+        padding:30px 10px">
+
+        Belum ada pesan.<br>
+        Silakan mulai percakapan.
+
+      </p>
+    `;
+
+    return;
+  }
+
+  box.innerHTML =
+    data.map(function(item){
+
+      const saya =
+        String(item.sender_id) ===
+        String(pengguna.id);
+
+      return `
+
+        <div style="
+          display:flex;
+          justify-content:${
+            saya
+            ? "flex-end"
+            : "flex-start"
+          };
+          margin:8px 0">
+
+          <div style="
+            max-width:75%;
+            padding:10px 12px;
+            border-radius:12px;
+            background:${
+              saya
+              ? "#dcecff"
+              : "#f1f1f1"
+            };
+            font-size:14px">
+
+            <div>
+              ${escapeHTML(
+                item.pesan || ""
+              )}
+            </div>
+
+            <div style="
+              font-size:10px;
+              color:#777;
+              margin-top:4px;
+              text-align:right">
+
+              ${
+                item.dibuat_pada
+                ? new Date(
+                    item.dibuat_pada
+                  ).toLocaleTimeString(
+                    "id-ID",
+                    {
+                      hour:"2-digit",
+                      minute:"2-digit"
+                    }
+                  )
+                : ""
+              }
+
+            </div>
+
+          </div>
+
+        </div>
+
+      `;
+
+    }).join("");
+
+  box.scrollTop =
+    box.scrollHeight;
+
+}
 
 function kirimChat(){
 
@@ -6479,7 +6771,26 @@ if(toko.last_online_at){
           📍 ${escapeHTML(toko.location || "-")}
 
         </div>
+        
+<button
+  onclick="bukaChatDenganPenjual(
+    '${String(toko.owner_id)}',
+    '${escapeHTML(toko.name || "Penjual")}'
+  )"
+  style="
+    margin-top:14px;
+    padding:11px 20px;
+    border:none;
+    border-radius:10px;
+    background:white;
+    color:#1261C9;
+    font-weight:bold;
+    font-size:14px;
+    cursor:pointer">
 
+  💬 Chat Penjual
+
+</button>
       </div>
 
 
