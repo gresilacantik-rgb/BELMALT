@@ -4109,6 +4109,7 @@ window.scrollTo({
 top:0,
 behavior:"smooth"
 });
+  mulaiNotifikasiChat();
 
 }
 
@@ -4405,6 +4406,118 @@ behavior:"smooth"
 
 }
 
+  let channelNotifikasiChat = null;
+
+function mulaiNotifikasiChat(){
+
+  if(!pengguna || !pengguna.id){
+    return;
+  }
+
+  // Hapus listener lama jika ada
+  if(channelNotifikasiChat){
+
+    supabaseClient
+      .removeChannel(
+        channelNotifikasiChat
+      );
+
+    channelNotifikasiChat = null;
+  }
+
+  channelNotifikasiChat =
+    supabaseClient
+      .channel(
+        "notifikasi-chat-" +
+        pengguna.id
+      )
+
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter:
+            "receiver_id=eq." +
+            pengguna.id
+        },
+        function(payload){
+
+          const pesanBaru =
+            payload.new;
+
+          console.log(
+            "Pesan chat baru:",
+            pesanBaru
+          );
+
+          tampilkanNotifikasiChat(
+            pesanBaru
+          );
+
+        }
+      )
+
+      .subscribe();
+
+}
+
+  async function tampilkanNotifikasiChat(pesanBaru){
+
+  if(!pesanBaru){
+    return;
+  }
+
+  let namaPengirim = "Pengguna";
+
+  if(pesanBaru.sender_id){
+
+    const { data } =
+      await supabaseClient
+        .from("profiles")
+        .select("nama")
+        .eq("id", pesanBaru.sender_id)
+        .maybeSingle();
+
+    if(data && data.nama){
+      namaPengirim = data.nama;
+    }
+
+  }
+
+  const teks =
+    pesanBaru.pesan ||
+    "Anda menerima pesan baru";
+
+  // Notifikasi dalam aplikasi
+  pesan(
+    "💬 " +
+    namaPengirim +
+    ": " +
+    teks
+  );
+
+  // Jika browser/WebView mendukung notifikasi
+  if(
+    "Notification" in window &&
+    Notification.permission === "granted"
+  ){
+
+    new Notification(
+      "💬 Pesan Baru BELMALT",
+      {
+        body:
+          namaPengirim +
+          ": " +
+          teks
+      }
+    );
+
+  }
+
+  }
+  
 function kirimChat(){
 
 const input=
@@ -8941,10 +9054,19 @@ async function loginDemo(){
     id: data.user.id
   };
 
+  await supabaseClient
+  .from("profiles")
+  .upsert({
+    id: data.user.id,
+    nama: nama
+  });
+
   localStorage.setItem(
     "penggunaBELMALT",
     JSON.stringify(pengguna)
   );
+
+  mulaiNotifikasiChat();
 
 
   // ==============================
