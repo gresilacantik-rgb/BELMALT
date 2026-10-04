@@ -4233,9 +4233,23 @@ async function chat(){
           item.pesan || "",
 
         waktu:
-          item.dibuat_pada || null
+          item.dibuat_pada || null,
+
+        belumDibaca:
+          0
 
       };
+
+    }
+
+    // Hitung pesan masuk yang belum dibaca
+    if(
+      String(item.receiver_id) ===
+      String(pengguna.id) &&
+      item.sudah_dibaca === false
+    ){
+
+      percakapan[lawanChat].belumDibaca++;
 
     }
 
@@ -4247,7 +4261,7 @@ async function chat(){
 
 
   // ==============================
-  // AMBIL NAMA SETIAP LAWAN CHAT
+  // AMBIL NAMA LAWAN CHAT
   // ==============================
 
   const hasil =
@@ -4333,11 +4347,15 @@ async function chat(){
 
             </div>
 
+
             <div style="
               flex:1;
               min-width:0">
 
               <div style="
+                display:flex;
+                align-items:center;
+                gap:7px;
                 font-weight:bold;
                 font-size:15px">
 
@@ -4345,7 +4363,35 @@ async function chat(){
                   item.nama
                 )}
 
+                ${
+                  item.belumDibaca > 0
+                  ? `
+                    <span style="
+                      display:inline-flex;
+                      align-items:center;
+                      justify-content:center;
+                      min-width:20px;
+                      height:20px;
+                      padding:0 6px;
+                      border-radius:10px;
+                      background:#e53935;
+                      color:white;
+                      font-size:11px;
+                      font-weight:bold">
+
+                      ${
+                        item.belumDibaca > 99
+                        ? "99+"
+                        : item.belumDibaca
+                      }
+
+                    </span>
+                  `
+                  : ""
+                }
+
               </div>
+
 
               <div style="
                 margin-top:5px;
@@ -4362,6 +4408,7 @@ async function chat(){
               </div>
 
             </div>
+
 
             <div style="
               font-size:10px;
@@ -4393,7 +4440,7 @@ async function chat(){
       }
     ).join("");
 
-}
+  }
 
   async function bukaChatUmum(lawanId){
 
@@ -4487,9 +4534,9 @@ async function chat(){
 
     </div>
 
-
-    <div
+      <div
       id="daftarPesanChat"
+      data-lawan-id="${String(lawanId)}"
       style="
         min-height:350px;
         max-height:55vh;
@@ -4554,7 +4601,150 @@ async function chat(){
 
   `;
 
+    await tandaiChatSudahDibaca(lawanId);
+
   await muatPesanChat(lawanId);
+
+}
+
+  async function tandaiChatSudahDibaca(lawanId){
+
+  if(!pengguna || !pengguna.id || !lawanId){
+    return;
+  }
+
+  const { error } =
+    await supabaseClient
+      .from("messages")
+      .update({
+        sudah_dibaca:true
+      })
+      .eq(
+        "sender_id",
+        lawanId
+      )
+      .eq(
+        "receiver_id",
+        pengguna.id
+      )
+      .eq(
+        "sudah_dibaca",
+        false
+      );
+
+  if(error){
+
+    console.error(
+      "Gagal menandai chat sudah dibaca:",
+      error
+    );
+
+    return;
+  }
+
+  // Perbarui angka badge Chat
+  await updateBadgeChat();
+
+  }
+
+  async function updateBadgeChat(){
+
+  if(!pengguna || !pengguna.id){
+    return;
+  }
+
+  const { data, error } =
+    await supabaseClient
+      .from("messages")
+      .select("id")
+      .eq(
+        "receiver_id",
+        pengguna.id
+      )
+      .eq(
+        "sudah_dibaca",
+        false
+      );
+
+  if(error){
+
+    console.error(
+      "Gagal menghitung chat belum dibaca:",
+      error
+    );
+
+    return;
+  }
+
+  const jumlah =
+    data
+    ? data.length
+    : 0;
+
+
+  // ==============================
+  // CARI TOMBOL CHAT BERANDA
+  // ==============================
+
+  const tombolChat =
+    document.getElementById("navChat");
+
+  if(!tombolChat){
+    return;
+  }
+
+
+  // Hapus badge lama
+
+  const badgeLama =
+    tombolChat.querySelector(
+      ".badge-chat-belum-dibaca"
+    );
+
+  if(badgeLama){
+    badgeLama.remove();
+  }
+
+
+  // Tidak ada pesan belum dibaca
+
+  if(jumlah <= 0){
+    return;
+  }
+
+
+  // ==============================
+  // BUAT BADGE ANGKA
+  // ==============================
+
+  const badge =
+    document.createElement("span");
+
+  badge.className =
+    "badge-chat-belum-dibaca";
+
+  badge.textContent =
+    jumlah > 99
+      ? "99+"
+      : String(jumlah);
+
+  badge.style.cssText = `
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width:20px;
+    height:20px;
+    padding:0 6px;
+    margin-left:5px;
+    border-radius:10px;
+    background:#e53935;
+    color:white;
+    font-size:11px;
+    font-weight:bold;
+    vertical-align:middle;
+  `;
+
+  tombolChat.appendChild(badge);
 
 }
 
@@ -4851,7 +5041,7 @@ async function chat(){
 
 }
 
-  let channelNotifikasiChat = null;
+let channelNotifikasiChat = null;
 
 function mulaiNotifikasiChat(){
 
@@ -4859,7 +5049,6 @@ function mulaiNotifikasiChat(){
     return;
   }
 
-  // Hapus listener lama jika ada
   if(channelNotifikasiChat){
 
     supabaseClient
@@ -4869,6 +5058,9 @@ function mulaiNotifikasiChat(){
 
     channelNotifikasiChat = null;
   }
+
+  // Perbarui badge saat mulai
+  updateBadgeChat();
 
   channelNotifikasiChat =
     supabaseClient
@@ -4880,34 +5072,75 @@ function mulaiNotifikasiChat(){
       .on(
         "postgres_changes",
         {
-          event: "INSERT",
-          schema: "public",
-          table: "messages",
+          event:"INSERT",
+          schema:"public",
+          table:"messages",
           filter:
             "receiver_id=eq." +
             pengguna.id
         },
-        function(payload){
+
+        async function(payload){
 
           const pesanBaru =
             payload.new;
+
+          if(!pesanBaru){
+            return;
+          }
 
           console.log(
             "Pesan chat baru:",
             pesanBaru
           );
 
+          // Perbarui angka badge
+          await updateBadgeChat();
+
+          // Tampilkan notifikasi
           tampilkanNotifikasiChat(
             pesanBaru
           );
 
+          // Cek chat yang sedang dibuka
+          const box =
+            document.getElementById(
+              "daftarPesanChat"
+            );
+
+          const lawanId =
+            box
+            ? box.dataset.lawanId
+            : null;
+
+          // Jika sedang membuka chat
+          // dengan pengirim pesan baru
+          if(
+            box &&
+            lawanId &&
+            String(lawanId) ===
+            String(pesanBaru.sender_id)
+          ){
+
+            // Langsung tandai sudah dibaca
+            await tandaiChatSudahDibaca(
+              pesanBaru.sender_id
+            );
+
+            // Langsung tampilkan pesan baru
+            await muatPesanChat(
+              pesanBaru.sender_id
+            );
+
+          }
+
         }
+
       )
 
       .subscribe();
 
 }
-
   async function tampilkanNotifikasiChat(pesanBaru){
 
   if(!pesanBaru){
