@@ -887,9 +887,12 @@ const kategoriData=[
 
 ["Fashion","👕"],
 ["Kecantikan","💄"],
-["Elektronik","📱"],
 ["Makanan","🍜"],
-["Rumah","🏠"]
+["Elektronik","📱"],
+["Rumah","🏠"],
+["Aksesoris","👜"],
+["Jasa","🛠️"],
+["Lainnya","📦"]
 
 ];
 
@@ -961,35 +964,92 @@ behavior:"smooth"
 
 function filterKategori(namaKategori){
 
-const hasil=
-produkData.filter(function(item){
+  const semua =
+    window.semuaProdukBELMALT || [];
 
-return item.kategori===namaKategori;
+  const hasil =
+    semua.filter(function(item){
 
-});
+      return String(item.kategori || "")
+        .toLowerCase()
+        ===
+        String(namaKategori || "")
+        .toLowerCase();
 
-const box=document.getElementById("hasilKategori");
+    });
 
-if(!box) return;
 
-box.innerHTML=`
+  const box =
+    document.getElementById("hasilKategori");
 
-<div class="judul">
-${namaKategori}
-</div>
 
-<div class="produk-grid">
+  if(!box){
 
-${buatProdukHTML(hasil)}
+    const halaman =
+      document.getElementById("halaman");
 
-</div>
+    if(!halaman){
+      return;
+    }
 
-`;
+    halaman.innerHTML = `
 
-window.scrollTo({
-top:0,
-behavior:"smooth"
-});
+      <div class="judul">
+
+        <button
+          onclick="beranda()"
+          style="
+            border:none;
+            background:none;
+            font-size:22px;
+            cursor:pointer">
+
+          ←
+
+        </button>
+
+        ${escapeHTML(namaKategori)}
+
+      </div>
+
+      <div
+        class="produk-grid"
+        style="padding:10px">
+
+        ${buatProdukHTML(hasil)}
+
+      </div>
+
+    `;
+
+    window.scrollTo({
+      top:0,
+      behavior:"smooth"
+    });
+
+    return;
+  }
+
+
+  box.innerHTML = `
+
+    <div class="judul">
+      ${escapeHTML(namaKategori)}
+    </div>
+
+    <div class="produk-grid">
+
+      ${buatProdukHTML(hasil)}
+
+    </div>
+
+  `;
+
+
+  window.scrollTo({
+    top:0,
+    behavior:"smooth"
+  });
 
 }
 
@@ -998,6 +1058,438 @@ behavior:"smooth"
    PRODUK
 ========================= */
 
+  async function bukaDetailProduk(id){
+
+  const halaman =
+    document.getElementById("halaman");
+
+  if(!halaman){
+    return;
+  }
+
+  halaman.innerHTML = `
+
+    <div class="judul">
+      <button
+        onclick="beranda()"
+        style="
+          border:none;
+          background:none;
+          font-size:22px;
+          cursor:pointer">
+        ←
+      </button>
+
+      Detail Produk
+    </div>
+
+    <div
+      style="
+        background:#fff;
+        padding:12px;
+        min-height:500px">
+
+      <div style="
+        text-align:center;
+        padding:40px 10px;
+        color:#777">
+
+        Memuat produk...
+
+      </div>
+
+    </div>
+
+  `;
+
+  window.scrollTo({
+    top:0,
+    behavior:"smooth"
+  });
+
+
+  const { data: produk, error } =
+    await supabaseClient
+      .from("products")
+      .select(`
+        *,
+        shops (
+          id,
+          name,
+          logo_url,
+          location
+        )
+      `)
+      .eq("id", id)
+      .maybeSingle();
+
+
+  if(error){
+
+    console.error(
+      "Gagal memuat detail produk:",
+      error
+    );
+
+    halaman.innerHTML = `
+
+      <div class="judul">
+        <button
+          onclick="beranda()"
+          style="
+            border:none;
+            background:none;
+            font-size:22px">
+          ←
+        </button>
+
+        Detail Produk
+      </div>
+
+      <div style="
+        text-align:center;
+        padding:50px 20px">
+
+        ❌ Gagal memuat produk.
+
+      </div>
+
+    `;
+
+    return;
+  }
+
+
+  if(!produk){
+
+    halaman.innerHTML = `
+
+      <div class="judul">
+        <button
+          onclick="beranda()"
+          style="
+            border:none;
+            background:none;
+            font-size:22px">
+          ←
+        </button>
+
+        Detail Produk
+      </div>
+
+      <div style="
+        text-align:center;
+        padding:50px 20px">
+
+        📦 Produk tidak ditemukan.
+
+      </div>
+
+    `;
+
+    return;
+  }
+
+
+  const gambar =
+    produk.image_url || "";
+
+
+  const namaProduk =
+    produk.name || "Produk";
+
+
+  const harga =
+    Number(produk.price || 0);
+
+
+  const stok =
+    produk.stock ?? 0;
+
+
+  const kategori =
+    produk.category || "-";
+
+
+  const lokasi =
+    produk.location || "-";
+
+
+  const deskripsi =
+    produk.description ||
+    "Belum ada deskripsi produk.";
+
+
+  const toko =
+    produk.shops;
+
+
+  const namaToko =
+    toko && toko.name
+      ? toko.name
+      : "Toko";
+
+
+  const logoToko =
+    toko && toko.logo_url
+      ? toko.logo_url
+      : "";
+
+
+  halaman.innerHTML = `
+
+    <div class="judul">
+
+      <button
+        onclick="beranda()"
+        style="
+          border:none;
+          background:none;
+          font-size:22px;
+          cursor:pointer">
+        ←
+      </button>
+
+      Detail Produk
+
+    </div>
+
+
+    <div style="
+      background:#fff;
+      padding:12px">
+
+
+      <!-- FOTO PRODUK -->
+
+      <div style="
+        width:100%;
+        height:300px;
+        background:#f5f5f5;
+        border-radius:12px;
+        overflow:hidden;
+        display:flex;
+        align-items:center;
+        justify-content:center">
+
+        ${
+          gambar
+          ? `
+            <img
+              src="${escapeHTML(gambar)}"
+              alt="${escapeHTML(namaProduk)}"
+              style="
+                width:100%;
+                height:100%;
+                object-fit:contain">
+          `
+          : `
+            <span style="font-size:70px">
+              📦
+            </span>
+          `
+        }
+
+      </div>
+
+
+      <!-- INFORMASI PRODUK -->
+
+      <div style="
+        padding:12px 4px">
+
+        <div style="
+          font-size:20px;
+          font-weight:bold;
+          margin-bottom:8px">
+
+          ${escapeHTML(namaProduk)}
+
+        </div>
+
+
+        <div style="
+          font-size:23px;
+          font-weight:bold;
+          color:#e53935;
+          margin-bottom:8px">
+
+          ${rupiah(harga)}
+
+        </div>
+
+
+        <div style="
+          font-size:13px;
+          color:#666;
+          margin-bottom:6px">
+
+          Stok: ${stok}
+
+        </div>
+
+
+        <div style="
+          font-size:13px;
+          color:#666">
+
+          Kategori: ${escapeHTML(kategori)}
+
+        </div>
+
+      </div>
+
+
+      <!-- TOKO PENJUAL -->
+
+      <div
+        onclick="
+          bukaHalamanToko(${produk.shop_id})
+        "
+        style="
+          display:flex;
+          align-items:center;
+          gap:10px;
+          padding:12px;
+          margin-top:5px;
+          border-top:1px solid #eee;
+          border-bottom:1px solid #eee;
+          cursor:pointer">
+
+        <div style="
+          width:45px;
+          height:45px;
+          border-radius:50%;
+          overflow:hidden;
+          background:#eee;
+          display:flex;
+          align-items:center;
+          justify-content:center">
+
+          ${
+            logoToko
+            ? `
+              <img
+                src="${escapeHTML(logoToko)}"
+                style="
+                  width:100%;
+                  height:100%;
+                  object-fit:cover">
+            `
+            : `
+              <span style="font-size:22px">
+                🏪
+              </span>
+            `
+          }
+
+        </div>
+
+
+        <div style="flex:1">
+
+          <div style="
+            font-weight:bold;
+            color:#1261C9">
+
+            ${escapeHTML(namaToko)}
+
+          </div>
+
+          <div style="
+            font-size:12px;
+            color:#777">
+
+            📍 ${escapeHTML(
+              toko && toko.location
+                ? toko.location
+                : lokasi
+            )}
+
+          </div>
+
+        </div>
+
+
+        <div style="
+          color:#1261C9;
+          font-size:20px">
+
+          ›
+
+        </div>
+
+      </div>
+
+
+      <!-- DESKRIPSI -->
+
+      <div style="
+        padding:15px 4px">
+
+        <div style="
+          font-size:17px;
+          font-weight:bold;
+          margin-bottom:10px">
+
+          Deskripsi Produk
+
+        </div>
+
+        <div style="
+          font-size:14px;
+          line-height:1.6;
+          color:#444;
+          white-space:pre-wrap">
+
+          ${escapeHTML(deskripsi)}
+
+        </div>
+
+      </div>
+
+
+      <!-- TOMBOL -->
+
+      <div style="
+        display:flex;
+        gap:8px;
+        margin-top:10px">
+
+        <button
+          onclick="
+            tambahKeranjang(${produk.id})
+          "
+          class="tombol"
+          style="
+            flex:1">
+
+          🛒 + Keranjang
+
+        </button>
+
+        <button
+          onclick="
+            tambahKeranjang(${produk.id});
+            pesan('Produk ditambahkan ke keranjang')
+          "
+          class="checkout"
+          style="
+            flex:1">
+
+          🛍️ Beli Sekarang
+
+        </button>
+
+      </div>
+
+
+    </div>
+
+  `;
+
+}
+  
 function buatProdukHTML(data){
 
   if(data.length === 0){
@@ -1026,7 +1518,12 @@ function buatProdukHTML(data){
 
     return `
 
-    <div class="produk">
+    <div
+      class="produk"
+      onclick="bukaDetailProduk(${item.id})"
+      style="
+        cursor:pointer;
+        position:relative">
 
       <div class="gambar">
 
@@ -1034,15 +1531,15 @@ function buatProdukHTML(data){
           gambar
           ? `
           <img
-  src="${escapeHTML(gambar)}"
-  loading="lazy"
-  decoding="async"
-  alt="${escapeHTML(item.nama)}"
-          style="
-          width:100%;
-          height:100%;
-          object-fit:cover;
-          border-radius:10px">
+            src="${escapeHTML(gambar)}"
+            loading="lazy"
+            decoding="async"
+            alt="${escapeHTML(item.nama || "")}"
+            style="
+              width:100%;
+              height:100%;
+              object-fit:cover;
+              border-radius:10px">
           `
           : `
           ${item.icon || "📦"}
@@ -1054,47 +1551,53 @@ function buatProdukHTML(data){
       <div class="info">
 
         <div class="nama">
-        ${escapeHTML(item.nama)}
+          ${escapeHTML(item.nama || "")}
         </div>
 
         <div class="harga">
-        💰 ${rupiah(item.harga)}
+          💰 ${rupiah(item.harga)}
         </div>
 
         <div style="
-        font-size:11px;
-        color:#777;
-        margin-top:4px">
+          font-size:11px;
+          color:#777;
+          margin-top:4px">
 
-        Stok: ${item.stok ?? 0}
+          Stok: ${item.stok ?? 0}
 
         </div>
 
         <div class="lokasi">
-        📍 ${escapeHTML(item.lokasi || "-")}
+          📍 ${escapeHTML(item.lokasi || "-")}
         </div>
 
         <button
-  onclick="bukaHalamanToko(${item.shop_id})"
-  style="
-  border:none;
-  background:none;
-  padding:0;
-  margin-top:5px;
-  font-size:12px;
-  font-weight:bold;
-  color:#1261C9;
-  cursor:pointer">
+          onclick="
+            event.stopPropagation();
+            bukaHalamanToko(${item.shop_id})
+          "
+          style="
+            border:none;
+            background:none;
+            padding:0;
+            margin-top:5px;
+            font-size:12px;
+            font-weight:bold;
+            color:#1261C9;
+            cursor:pointer">
 
-  🏪 ${escapeHTML(item.namaToko || "Toko")}
+          🏪 ${escapeHTML(item.namaToko || "Toko")}
 
-</button>
+        </button>
 
         <button
-        class="tombol"
-        onclick="tambahKeranjang(${item.id})">
+          class="tombol"
+          onclick="
+            event.stopPropagation();
+            tambahKeranjang(${item.id})
+          ">
 
-        + Keranjang
+          + Keranjang
 
         </button>
 
@@ -1107,7 +1610,6 @@ function buatProdukHTML(data){
   }).join("");
 
 }
-
 
 function tambahKeranjang(id){
 
