@@ -919,43 +919,155 @@ ${item[1]}
 }
 
 
-function tampilkanKategori(){
+async function tampilkanKategori(){
 
-setNav("navKategori");
+  setNav("navKategori");
 
-document.getElementById("halaman").innerHTML=`
+  document.getElementById("halaman").innerHTML=`
 
-<div class="judul">
-🛍️ Semua Kategori
-</div>
+    <div class="judul">
+      🛍️ Semua Kategori
+    </div>
 
-<div class="kategori"
-style="overflow:visible;display:grid;grid-template-columns:repeat(3,1fr)">
+    <div class="kategori"
+    style="
+      overflow:visible;
+      display:grid;
+      grid-template-columns:repeat(3,1fr)">
 
-${buatKategoriHTML()}
+      ${buatKategoriHTML()}
 
-</div>
+    </div>
 
-<div id="hasilKategori">
+    <div id="hasilKategori">
 
-<div class="judul">
-Semua Produk
-</div>
+      <div class="judul">
+        Semua Produk
+      </div>
 
-<div class="produk-grid">
+      <div
+        class="produk-grid"
+        id="semuaProdukKategori">
 
-${buatProdukHTML(produkData)}
+        <p style="
+          grid-column:1/-1;
+          text-align:center;
+          color:#777">
 
-</div>
+          Memuat produk...
 
-</div>
+        </p>
 
-`;
+      </div>
 
-window.scrollTo({
-top:0,
-behavior:"smooth"
-});
+    </div>
+
+  `;
+
+  window.scrollTo({
+    top:0,
+    behavior:"smooth"
+  });
+
+
+  const { data, error } =
+    await supabaseClient
+      .from("products")
+      .select("*")
+      .eq("active", true)
+      .order("created_at", {
+        ascending:false
+      });
+
+
+  if(error){
+
+    console.error(
+      "Gagal memuat produk kategori:",
+      error
+    );
+
+    document.getElementById(
+      "semuaProdukKategori"
+    ).innerHTML = `
+
+      <p style="
+        grid-column:1/-1;
+        text-align:center;
+        color:#777">
+
+        Gagal memuat produk.
+
+      </p>
+
+    `;
+
+    return;
+  }
+
+
+  const produkSupabase = [];
+
+
+  for(const produk of (data || [])){
+
+    let namaToko = "Toko";
+
+
+    if(produk.shop_id){
+
+      const { data: toko } =
+        await supabaseClient
+          .from("shops")
+          .select("name")
+          .eq("id", produk.shop_id)
+          .maybeSingle();
+
+
+      if(toko && toko.name){
+
+        namaToko = toko.name;
+
+      }
+
+    }
+
+
+    produkSupabase.push({
+
+      id: produk.id,
+
+      shop_id: produk.shop_id,
+
+      nama: produk.name,
+
+      harga: Number(produk.price),
+
+      stok: produk.stock,
+
+      kategori: produk.category,
+
+      lokasi: produk.location || "",
+
+      deskripsi: produk.description || "",
+
+      gambar: produk.image_url || "",
+
+      namaToko: namaToko
+
+    });
+
+  }
+
+
+  window.semuaProdukBELMALT =
+    produkSupabase;
+
+
+  document.getElementById(
+    "semuaProdukKategori"
+  ).innerHTML =
+    buatProdukHTML(produkSupabase);
 
 }
 
