@@ -4259,77 +4259,108 @@ async function chat(){
   const daftar =
     Object.values(percakapan);
 
-
   // ==============================
-  // AMBIL NAMA TOKO + LOGO
-  // ==============================
+// AMBIL NAMA TOKO / NAMA AKUN
+// ==============================
 
-  const hasil =
-    await Promise.all(
+const hasil =
+  await Promise.all(
 
-      daftar.map(
-        async function(item){
+    daftar.map(
+      async function(item){
 
-          let namaToko =
-            "Penjual";
+        let namaTampilan =
+          "Pengguna";
 
-          let logoToko =
-            "";
+        let logoToko =
+          "";
 
-          const { data: toko } =
-            await supabaseClient
-              .from("shops")
-              .select(
-                "name,logo_url"
-              )
-              .eq(
-                "owner_id",
-                item.lawanId
-              )
-              .maybeSingle();
+        // ==========================
+        // CEK APAKAH PUNYA TOKO
+        // ==========================
 
-          if(
-            toko &&
-            toko.name
-          ){
+        const { data: toko } =
+          await supabaseClient
+            .from("shops")
+            .select(
+              "name,logo_url"
+            )
+            .eq(
+              "owner_id",
+              item.lawanId
+            )
+            .maybeSingle();
 
-            namaToko =
-              toko.name;
 
-          }
+        // Jika punya toko
+        if(
+          toko &&
+          toko.name
+        ){
 
-          if(
-            toko &&
-            toko.logo_url
-          ){
+          namaTampilan =
+            toko.name;
+
+          if(toko.logo_url){
 
             logoToko =
               toko.logo_url;
 
           }
 
-          return {
+        }
 
-            ...item,
+        // ==========================
+        // JIKA TIDAK PUNYA TOKO
+        // AMBIL NAMA AKUN
+        // ==========================
 
-            namaToko:
-              namaToko,
+        else{
 
-            logoToko:
-              logoToko
+          const { data: profil } =
+            await supabaseClient
+              .from("profiles")
+              .select("nama")
+              .eq(
+                "id",
+                item.lawanId
+              )
+              .maybeSingle();
 
-          };
+          if(
+            profil &&
+            profil.nama
+          ){
+
+            namaTampilan =
+              profil.nama;
+
+          }
 
         }
-      )
-
-    );
 
 
-  // ==============================
-  // TAMPILKAN DAFTAR CHAT
-  // ==============================
+        return {
 
+          ...item,
+
+          namaToko:
+            namaTampilan,
+
+          logoToko:
+            logoToko
+
+        };
+
+      }
+    )
+
+  );
+
+
+// ==============================
+// TAMPILKAN DAFTAR CHAT
+// ==============================
   box.innerHTML =
     hasil.map(
       function(item){
