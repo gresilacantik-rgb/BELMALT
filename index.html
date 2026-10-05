@@ -4261,7 +4261,7 @@ async function chat(){
 
 
   // ==============================
-  // AMBIL NAMA LAWAN CHAT
+  // AMBIL NAMA TOKO + LOGO
   // ==============================
 
   const hasil =
@@ -4270,26 +4270,41 @@ async function chat(){
       daftar.map(
         async function(item){
 
-          let nama =
-            "Pengguna";
+          let namaToko =
+            "Penjual";
 
-          const { data: profil } =
+          let logoToko =
+            "";
+
+          const { data: toko } =
             await supabaseClient
-              .from("profiles")
-              .select("nama")
+              .from("shops")
+              .select(
+                "name,logo_url"
+              )
               .eq(
-                "id",
+                "owner_id",
                 item.lawanId
               )
               .maybeSingle();
 
           if(
-            profil &&
-            profil.nama
+            toko &&
+            toko.name
           ){
 
-            nama =
-              profil.nama;
+            namaToko =
+              toko.name;
+
+          }
+
+          if(
+            toko &&
+            toko.logo_url
+          ){
+
+            logoToko =
+              toko.logo_url;
 
           }
 
@@ -4297,8 +4312,11 @@ async function chat(){
 
             ...item,
 
-            nama:
-              nama
+            namaToko:
+              namaToko,
+
+            logoToko:
+              logoToko
 
           };
 
@@ -4315,6 +4333,29 @@ async function chat(){
   box.innerHTML =
     hasil.map(
       function(item){
+
+        const foto =
+          item.logoToko
+          ? `
+            <img
+              src="${escapeHTML(
+                item.logoToko
+              )}"
+              style="
+                width:100%;
+                height:100%;
+                object-fit:cover;
+                border-radius:50%">
+          `
+          : `
+            <span
+              style="
+                font-size:22px">
+
+              🏪
+
+            </span>
+          `;
 
         return `
 
@@ -4335,15 +4376,14 @@ async function chat(){
               width:48px;
               height:48px;
               border-radius:50%;
-              background:#1261C9;
-              color:white;
+              background:#eaf2ff;
               display:flex;
               align-items:center;
               justify-content:center;
-              font-size:22px;
+              overflow:hidden;
               flex-shrink:0">
 
-              👤
+              ${foto}
 
             </div>
 
@@ -4360,7 +4400,7 @@ async function chat(){
                 font-size:15px">
 
                 ${escapeHTML(
-                  item.nama
+                  item.namaToko
                 )}
 
                 ${
