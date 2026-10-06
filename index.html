@@ -1104,6 +1104,7 @@ function filterKategori(namaKategori){
 ========================= */
 
   async function bukaDetailProduk(id){
+async function bukaDetailProduk(id){
 
   const halaman =
     document.getElementById("halaman");
@@ -1112,9 +1113,11 @@ function filterKategori(namaKategori){
     return;
   }
 
+
   halaman.innerHTML = `
 
     <div class="judul">
+
       <button
         onclick="beranda()"
         style="
@@ -1122,11 +1125,15 @@ function filterKategori(namaKategori){
           background:none;
           font-size:22px;
           cursor:pointer">
+
         ←
+
       </button>
 
       Detail Produk
+
     </div>
+
 
     <div
       style="
@@ -1147,11 +1154,16 @@ function filterKategori(namaKategori){
 
   `;
 
+
   window.scrollTo({
     top:0,
     behavior:"smooth"
   });
 
+
+  /*
+    AMBIL PRODUK
+  */
 
   const { data: produk, error } =
     await supabaseClient
@@ -1179,16 +1191,20 @@ function filterKategori(namaKategori){
     halaman.innerHTML = `
 
       <div class="judul">
+
         <button
           onclick="beranda()"
           style="
             border:none;
             background:none;
             font-size:22px">
+
           ←
+
         </button>
 
         Detail Produk
+
       </div>
 
       <div style="
@@ -1210,16 +1226,20 @@ function filterKategori(namaKategori){
     halaman.innerHTML = `
 
       <div class="judul">
+
         <button
           onclick="beranda()"
           style="
             border:none;
             background:none;
             font-size:22px">
+
           ←
+
         </button>
 
         Detail Produk
+
       </div>
 
       <div style="
@@ -1236,8 +1256,83 @@ function filterKategori(namaKategori){
   }
 
 
-  const gambar =
-    produk.image_url || "";
+  /*
+    AMBIL SEMUA VARIAN
+  */
+
+  const {
+    data: varianData,
+    error: varianError
+  } =
+    await supabaseClient
+      .from("product_variants")
+      .select("*")
+      .eq("product_id", produk.id)
+      .order("id", {
+        ascending:true
+      });
+
+
+  if(varianError){
+
+    console.error(
+      "Gagal memuat varian:",
+      varianError
+    );
+
+  }
+
+
+  const varian =
+    varianData || [];
+
+
+  /*
+    FOTO PRODUK
+
+    FOTO UTAMA + FOTO VARIAN
+  */
+
+  const semuaFoto = [];
+
+
+  if(produk.image_url){
+
+    semuaFoto.push({
+      image_url:produk.image_url,
+      size:"",
+      color:"",
+      code:"",
+      brand:""
+    });
+
+  }
+
+
+  varian.forEach(function(item){
+
+    if(
+      item.image_url &&
+      item.image_url !== produk.image_url
+    ){
+
+      semuaFoto.push({
+
+        image_url:item.image_url,
+
+        size:item.size || "",
+
+        color:item.color || "",
+
+        code:item.code || "",
+
+        brand:item.brand || ""
+
+      });
+
+    }
+
+  });
 
 
   const namaProduk =
@@ -1281,6 +1376,58 @@ function filterKategori(namaKategori){
       : "";
 
 
+  /*
+    GALERI FOTO
+  */
+
+  const galeriFoto = semuaFoto.length > 0
+    ? semuaFoto
+        .map(function(item,index){
+
+          return `
+
+            <div
+              style="
+                min-width:100%;
+                height:300px;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                background:#f5f5f5">
+
+              <img
+                src="${escapeHTML(item.image_url)}"
+                alt="${escapeHTML(namaProduk)}"
+                style="
+                  width:100%;
+                  height:100%;
+                  object-fit:contain">
+
+            </div>
+
+          `;
+
+        })
+        .join("")
+    : `
+
+        <div style="
+          min-width:100%;
+          height:300px;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          background:#f5f5f5">
+
+          <span style="font-size:70px">
+            📦
+          </span>
+
+        </div>
+
+      `;
+
+
   halaman.innerHTML = `
 
     <div class="judul">
@@ -1292,7 +1439,9 @@ function filterKategori(namaKategori){
           background:none;
           font-size:22px;
           cursor:pointer">
+
         ←
+
       </button>
 
       Detail Produk
@@ -1300,42 +1449,85 @@ function filterKategori(namaKategori){
     </div>
 
 
-    <div style="
-      background:#fff;
-      padding:12px">
+    <div
+      style="
+        background:#fff;
+        padding:12px">
 
 
-      <!-- FOTO PRODUK -->
+      <!-- GALERI FOTO -->
 
-      <div style="
-        width:100%;
-        height:300px;
-        background:#f5f5f5;
-        border-radius:12px;
-        overflow:hidden;
-        display:flex;
-        align-items:center;
-        justify-content:center">
+      <div
+        id="galeriProduk"
+        style="
+          width:100%;
+          overflow-x:auto;
+          overflow-y:hidden;
+          display:flex;
+          scroll-snap-type:x mandatory;
+          scroll-behavior:smooth;
+          border-radius:12px;
+          scrollbar-width:none">
 
-        ${
-          gambar
-          ? `
-            <img
-              src="${escapeHTML(gambar)}"
-              alt="${escapeHTML(namaProduk)}"
-              style="
-                width:100%;
-                height:100%;
-                object-fit:contain">
-          `
-          : `
-            <span style="font-size:70px">
-              📦
-            </span>
-          `
-        }
+        ${galeriFoto}
 
       </div>
+
+
+      ${
+        semuaFoto.length > 1
+        ? `
+
+          <div style="
+            text-align:center;
+            font-size:12px;
+            color:#777;
+            margin-top:8px">
+
+            👈 Geser foto ke kiri/kanan 👉
+
+          </div>
+
+          <div
+            style="
+              display:flex;
+              gap:6px;
+              overflow-x:auto;
+              margin-top:10px">
+
+            ${
+              semuaFoto
+                .map(function(item,index){
+
+                  return `
+
+                    <img
+                      src="${escapeHTML(item.image_url)}"
+                      onclick="
+                        document.getElementById('foto-${index}').scrollIntoView({
+                          behavior:'smooth',
+                          inline:'center'
+                        })
+                      "
+                      style="
+                        width:55px;
+                        height:55px;
+                        object-fit:cover;
+                        border-radius:8px;
+                        border:1px solid #ddd;
+                        cursor:pointer">
+
+                  `;
+
+                })
+                .join("")
+            }
+
+          </div>
+
+        `
+        : ""
+      }
 
 
       <!-- INFORMASI PRODUK -->
@@ -1378,11 +1570,117 @@ function filterKategori(namaKategori){
           font-size:13px;
           color:#666">
 
-          Kategori: ${escapeHTML(kategori)}
+          Kategori:
+          ${escapeHTML(kategori)}
 
         </div>
 
       </div>
+
+
+      <!-- VARIAN -->
+
+      ${
+        varian.length > 0
+        ? `
+
+          <div
+            style="
+              border-top:1px solid #eee;
+              padding:15px 4px">
+
+            <div style="
+              font-size:17px;
+              font-weight:bold;
+              margin-bottom:10px">
+
+              📦 Varian Produk
+
+            </div>
+
+
+            <div
+              style="
+                display:flex;
+                gap:10px;
+                overflow-x:auto">
+
+              ${
+                varian
+                  .map(function(item,index){
+
+                    return `
+
+                      <div
+                        style="
+                          min-width:130px;
+                          border:1px solid #ddd;
+                          border-radius:10px;
+                          padding:8px">
+
+                        ${
+                          item.image_url
+                          ? `
+
+                            <img
+                              src="${escapeHTML(item.image_url)}"
+                              style="
+                                width:100%;
+                                height:100px;
+                                object-fit:cover;
+                                border-radius:8px">
+
+                          `
+                          : ""
+                        }
+
+
+                        <div style="
+                          font-size:12px;
+                          margin-top:7px;
+                          line-height:1.6">
+
+                          ${
+                            item.size
+                            ? `📏 ${escapeHTML(item.size)}<br>`
+                            : ""
+                          }
+
+                          ${
+                            item.color
+                            ? `🎨 ${escapeHTML(item.color)}<br>`
+                            : ""
+                          }
+
+                          ${
+                            item.code
+                            ? `🏷️ ${escapeHTML(item.code)}<br>`
+                            : ""
+                          }
+
+                          ${
+                            item.brand
+                            ? `🔖 ${escapeHTML(item.brand)}`
+                            : ""
+                          }
+
+                        </div>
+
+                      </div>
+
+                    `;
+
+                  })
+                  .join("")
+              }
+
+            </div>
+
+          </div>
+
+        `
+        : ""
+      }
 
 
       <!-- TOKO PENJUAL -->
@@ -1414,17 +1712,21 @@ function filterKategori(namaKategori){
           ${
             logoToko
             ? `
+
               <img
                 src="${escapeHTML(logoToko)}"
                 style="
                   width:100%;
                   height:100%;
                   object-fit:cover">
+
             `
             : `
+
               <span style="font-size:22px">
                 🏪
               </span>
+
             `
           }
 
@@ -1481,6 +1783,7 @@ function filterKategori(namaKategori){
 
         </div>
 
+
         <div style="
           font-size:14px;
           line-height:1.6;
@@ -1513,11 +1816,12 @@ function filterKategori(namaKategori){
 
         </button>
 
+
         <button
           onclick="
-  tambahKeranjang(${produk.id});
-  bukaCheckout();
-"
+            tambahKeranjang(${produk.id});
+            bukaCheckout();
+          "
           class="checkout"
           style="
             flex:1">
@@ -1533,7 +1837,33 @@ function filterKategori(namaKategori){
 
   `;
 
-}
+
+  /*
+    TAMBAHKAN ID PADA FOTO
+    AGAR THUMBNAIL BISA DIGESER
+  */
+
+  const galeri =
+    document.getElementById("galeriProduk");
+
+
+  if(galeri){
+
+    Array.from(
+      galeri.children
+    ).forEach(function(item,index){
+
+      item.id =
+        "foto-" + index;
+
+      item.style.scrollSnapAlign =
+        "start";
+
+    });
+
+  }
+
+  }
   
 function buatProdukHTML(data){
 
