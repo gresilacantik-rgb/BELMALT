@@ -1817,18 +1817,16 @@ function filterKategori(namaKategori){
 
 
         <button
-          onclick="
-            tambahKeranjang(${produk.id});
-            bukaCheckout();
-          "
-          class="checkout"
-          style="
-            flex:1">
+  onclick="
+    beliSekarang(${produk.id});
+  "
+  class="checkout"
+  style="
+    flex:1">
 
-          🛍️ Beli Sekarang
+  🛍️ Beli Sekarang
 
-        </button>
-
+</button>
       </div>
 
 
@@ -1985,7 +1983,7 @@ function buatProdukHTML(data){
 
 }
 
-function tambahKeranjang(id){
+async function tambahKeranjang(id){
 
   const semuaProduk =
     window.semuaProdukBELMALT || [];
@@ -1997,6 +1995,7 @@ function tambahKeranjang(id){
 
     });
 
+
   if(!produk){
 
     pesan("Produk tidak ditemukan");
@@ -2004,6 +2003,7 @@ function tambahKeranjang(id){
     return;
 
   }
+
 
   if(produk.stok <= 0){
 
@@ -2013,12 +2013,380 @@ function tambahKeranjang(id){
 
   }
 
+
+  /*
+    AMBIL VARIAN PRODUK
+  */
+
+  const {
+    data: varianData,
+    error: varianError
+  } =
+    await supabaseClient
+      .from("product_variants")
+      .select("*")
+      .eq("product_id", id)
+      .order("id", {
+        ascending:true
+      });
+
+
+  if(varianError){
+
+    console.error(
+      "Gagal memuat varian:",
+      varianError
+    );
+
+    pesan(
+      "Gagal memuat varian produk"
+    );
+
+    return;
+
+  }
+
+
+  const varian =
+    varianData || [];
+
+
+  /*
+    JIKA PRODUK MEMILIKI VARIAN
+  */
+
+  if(varian.length > 0){
+
+    tampilkanPilihanVarian(
+      produk,
+      varian
+    );
+
+    return;
+
+  }
+
+
+  /*
+    PRODUK TANPA VARIAN
+    TETAP MENGGUNAKAN CARA LAMA
+  */
+
+  tambahProdukKeKeranjang(
+    produk,
+    null
+  );
+
+  }
+
+  function tampilkanPilihanVarian(
+  produk,
+  varian
+){
+
+  const halaman =
+    document.getElementById("halaman");
+
+  if(!halaman){
+    return;
+  }
+
+
+  halaman.innerHTML = `
+
+    <div class="judul">
+
+      <button
+        onclick="bukaDetailProduk(${produk.id})"
+        style="
+          border:none;
+          background:none;
+          font-size:22px;
+          cursor:pointer">
+
+        ←
+
+      </button>
+
+      Pilih Varian
+
+    </div>
+
+
+    <div
+      style="
+        background:#fff;
+        padding:12px">
+
+
+      <div style="
+        font-size:18px;
+        font-weight:bold;
+        margin-bottom:10px">
+
+        ${escapeHTML(produk.nama)}
+
+      </div>
+
+
+      <div style="
+        font-size:21px;
+        font-weight:bold;
+        color:#e53935;
+        margin-bottom:15px">
+
+        ${rupiah(produk.harga)}
+
+      </div>
+
+
+      <div style="
+        font-weight:bold;
+        margin-bottom:10px">
+
+        Pilih varian produk:
+
+      </div>
+
+
+      <div
+        style="
+          display:flex;
+          flex-direction:column;
+          gap:10px">
+
+        ${
+          varian.map(function(item,index){
+
+            return `
+
+              <button
+                type="button"
+                onclick="
+                  pilihVarianKeranjang(
+                    ${produk.id},
+                    ${item.id}
+                  )
+                "
+                style="
+                  display:flex;
+                  gap:12px;
+                  align-items:center;
+                  width:100%;
+                  padding:10px;
+                  background:#fff;
+                  border:1px solid #ddd;
+                  border-radius:12px;
+                  text-align:left">
+
+                ${
+                  item.image_url
+                  ? `
+
+                    <img
+                      src="${escapeHTML(item.image_url)}"
+                      style="
+                        width:80px;
+                        height:80px;
+                        object-fit:cover;
+                        border-radius:10px">
+
+                  `
+                  : `
+
+                    <div style="
+                      width:80px;
+                      height:80px;
+                      display:flex;
+                      align-items:center;
+                      justify-content:center;
+                      background:#f5f5f5;
+                      border-radius:10px;
+                      font-size:35px">
+
+                      📦
+
+                    </div>
+
+                  `
+                }
+
+
+                <div style="flex:1">
+
+                  <div style="
+                    font-weight:bold;
+                    margin-bottom:5px">
+
+                    Varian ${index + 1}
+
+                  </div>
+
+
+                  ${
+                    item.size
+                    ? `
+                      <div style="font-size:13px">
+                        📏 Ukuran:
+                        ${escapeHTML(item.size)}
+                      </div>
+                    `
+                    : ""
+                  }
+
+
+                  ${
+                    item.color
+                    ? `
+                      <div style="font-size:13px">
+                        🎨 Warna:
+                        ${escapeHTML(item.color)}
+                      </div>
+                    `
+                    : ""
+                  }
+
+
+                  ${
+                    item.code
+                    ? `
+                      <div style="font-size:13px">
+                        🏷️ Kode:
+                        ${escapeHTML(item.code)}
+                      </div>
+                    `
+                    : ""
+                  }
+
+
+                  ${
+                    item.brand
+                    ? `
+                      <div style="font-size:13px">
+                        🔖 Merk:
+                        ${escapeHTML(item.brand)}
+                      </div>
+                    `
+                    : ""
+                  }
+
+                </div>
+
+
+                <div style="
+                  font-size:22px;
+                  color:#1261C9">
+
+                  ›
+
+                </div>
+
+              </button>
+
+            `;
+
+          }).join("")
+        }
+
+      </div>
+
+    </div>
+
+  `;
+
+
+  window.scrollTo({
+    top:0,
+    behavior:"smooth"
+  });
+
+}
+
+function pilihVarianKeranjang(
+  produkId,
+  varianId
+){
+
+  const semuaProduk =
+    window.semuaProdukBELMALT || [];
+
+  const produk =
+    semuaProduk.find(function(item){
+
+      return Number(item.id) ===
+        Number(produkId);
+
+    });
+
+
+  if(!produk){
+
+    pesan("Produk tidak ditemukan");
+
+    return;
+
+  }
+
+
+  /*
+    AMBIL VARIAN YANG DIPILIH
+  */
+
+  supabaseClient
+    .from("product_variants")
+    .select("*")
+    .eq("id", varianId)
+    .maybeSingle()
+    .then(function(result){
+
+      const varian =
+        result.data;
+
+      const error =
+        result.error;
+
+
+      if(error || !varian){
+
+        console.error(
+          "Gagal mengambil varian:",
+          error
+        );
+
+        pesan(
+          "Varian tidak ditemukan"
+        );
+
+        return;
+
+      }
+
+
+      tambahProdukKeKeranjang(
+        produk,
+        varian
+      );
+
+    });
+
+}
+
+  function tambahProdukKeKeranjang(
+  produk,
+  varian
+){
+
   let item =
     keranjang.find(function(item){
 
-      return Number(item.id) === Number(id);
+      return Number(item.id) ===
+        Number(produk.id)
+      &&
+      Number(item.varian_id || 0) ===
+        Number(varian ? varian.id : 0);
 
     });
+
 
   if(item){
 
@@ -2036,30 +2404,448 @@ function tambahKeranjang(id){
 
     keranjang.push({
 
-      id: produk.id,
+      id:produk.id,
 
-      nama: produk.nama,
+      nama:produk.nama,
 
-      harga: produk.harga,
+      harga:produk.harga,
 
-      icon: produk.icon || "📦",
+      icon:produk.icon || "📦",
 
-      image_url: produk.image_url || produk.gambar || "",
+      image_url:
+        varian && varian.image_url
+          ? varian.image_url
+          : (
+              produk.image_url ||
+              produk.gambar ||
+              ""
+            ),
 
-      jumlah: 1
+      varian_id:
+        varian
+          ? varian.id
+          : null,
+
+      ukuran:
+        varian
+          ? varian.size || ""
+          : "",
+
+      warna:
+        varian
+          ? varian.color || ""
+          : "",
+
+      kode:
+        varian
+          ? varian.code || ""
+          : "",
+
+      merk:
+        varian
+          ? varian.brand || ""
+          : "",
+
+      jumlah:1
 
     });
 
   }
 
+
   simpanKeranjang();
 
-  pesan(
-    produk.nama + " masuk keranjang 🛒"
-  );
+
+  if(varian){
+
+    pesan(
+      "Varian produk masuk keranjang 🛒"
+    );
+
+  }else{
+
+    pesan(
+      produk.nama +
+      " masuk keranjang 🛒"
+    );
 
   }
 
+}
+
+
+async function beliSekarang(id){
+
+  const semuaProduk =
+    window.semuaProdukBELMALT || [];
+
+  const produk =
+    semuaProduk.find(function(item){
+
+      return Number(item.id) ===
+        Number(id);
+
+    });
+
+
+  if(!produk){
+
+    pesan("Produk tidak ditemukan");
+
+    return;
+
+  }
+
+
+  if(produk.stok <= 0){
+
+    pesan("Stok produk habis");
+
+    return;
+
+  }
+
+
+  const {
+    data: varian,
+    error
+  } =
+    await supabaseClient
+      .from("product_variants")
+      .select("*")
+      .eq("product_id", id)
+      .order("id", {
+        ascending:true
+      });
+
+
+  if(error){
+
+    console.error(
+      "Gagal memuat varian:",
+      error
+    );
+
+    pesan(
+      "Gagal memuat varian produk"
+    );
+
+    return;
+
+  }
+
+
+  /*
+    JIKA ADA VARIAN
+  */
+
+  if(varian && varian.length > 0){
+
+    tampilkanPilihanVarianBeli(
+      produk,
+      varian
+    );
+
+    return;
+
+  }
+
+
+  /*
+    PRODUK TANPA VARIAN
+  */
+
+  tambahProdukKeKeranjang(
+    produk,
+    null
+  );
+
+  bukaCheckout();
+
+}
+
+  function tampilkanPilihanVarianBeli(
+  produk,
+  varian
+){
+
+  const halaman =
+    document.getElementById("halaman");
+
+  if(!halaman){
+    return;
+  }
+
+
+  halaman.innerHTML = `
+
+    <div class="judul">
+
+      <button
+        onclick="bukaDetailProduk(${produk.id})"
+        style="
+          border:none;
+          background:none;
+          font-size:22px;
+          cursor:pointer">
+
+        ←
+
+      </button>
+
+      Pilih Varian
+
+    </div>
+
+
+    <div
+      style="
+        background:#fff;
+        padding:12px">
+
+
+      <div style="
+        font-size:18px;
+        font-weight:bold;
+        margin-bottom:8px">
+
+        ${escapeHTML(produk.nama)}
+
+      </div>
+
+
+      <div style="
+        font-size:21px;
+        font-weight:bold;
+        color:#e53935;
+        margin-bottom:15px">
+
+        ${rupiah(produk.harga)}
+
+      </div>
+
+
+      <div style="
+        font-weight:bold;
+        margin-bottom:10px">
+
+        Pilih varian untuk dibeli:
+
+      </div>
+
+
+      <div style="
+        display:flex;
+        flex-direction:column;
+        gap:10px">
+
+        ${
+          varian.map(function(item,index){
+
+            return `
+
+              <button
+                type="button"
+                onclick="
+                  pilihVarianBeli(
+                    ${produk.id},
+                    ${item.id}
+                  )
+                "
+                style="
+                  display:flex;
+                  align-items:center;
+                  gap:12px;
+                  width:100%;
+                  padding:10px;
+                  background:#fff;
+                  border:1px solid #ddd;
+                  border-radius:12px;
+                  text-align:left">
+
+                ${
+                  item.image_url
+                  ? `
+
+                    <img
+                      src="${escapeHTML(item.image_url)}"
+                      style="
+                        width:80px;
+                        height:80px;
+                        object-fit:cover;
+                        border-radius:10px">
+
+                  `
+                  : `
+                    <div style="
+                      width:80px;
+                      height:80px;
+                      display:flex;
+                      align-items:center;
+                      justify-content:center;
+                      background:#f5f5f5;
+                      border-radius:10px;
+                      font-size:35px">
+
+                      📦
+
+                    </div>
+                  `
+                }
+
+
+                <div style="flex:1">
+
+                  <div style="
+                    font-weight:bold;
+                    margin-bottom:5px">
+
+                    Varian ${index + 1}
+
+                  </div>
+
+
+                  ${
+                    item.size
+                    ? `
+                      <div style="font-size:13px">
+                        📏 Ukuran:
+                        ${escapeHTML(item.size)}
+                      </div>
+                    `
+                    : ""
+                  }
+
+
+                  ${
+                    item.color
+                    ? `
+                      <div style="font-size:13px">
+                        🎨 Warna:
+                        ${escapeHTML(item.color)}
+                      </div>
+                    `
+                    : ""
+                  }
+
+
+                  ${
+                    item.code
+                    ? `
+                      <div style="font-size:13px">
+                        🏷️ Kode:
+                        ${escapeHTML(item.code)}
+                      </div>
+                    `
+                    : ""
+                  }
+
+
+                  ${
+                    item.brand
+                    ? `
+                      <div style="font-size:13px">
+                        🔖 Merk:
+                        ${escapeHTML(item.brand)}
+                      </div>
+                    `
+                    : ""
+                  }
+
+                </div>
+
+
+                <div style="
+                  color:#1261C9;
+                  font-size:22px">
+
+                  ›
+
+                </div>
+
+              </button>
+
+            `;
+
+          }).join("")
+        }
+
+      </div>
+
+    </div>
+
+  `;
+
+
+  window.scrollTo({
+    top:0,
+    behavior:"smooth"
+  });
+
+}
+
+  async function pilihVarianBeli(
+  produkId,
+  varianId
+){
+
+  const semuaProduk =
+    window.semuaProdukBELMALT || [];
+
+  const produk =
+    semuaProduk.find(function(item){
+
+      return Number(item.id) ===
+        Number(produkId);
+
+    });
+
+
+  if(!produk){
+
+    pesan("Produk tidak ditemukan");
+
+    return;
+
+  }
+
+
+  const {
+    data: varian,
+    error
+  } =
+    await supabaseClient
+      .from("product_variants")
+      .select("*")
+      .eq("id", varianId)
+      .maybeSingle();
+
+
+  if(error || !varian){
+
+    console.error(
+      "Gagal mengambil varian:",
+      error
+    );
+
+    pesan(
+      "Varian tidak ditemukan"
+    );
+
+    return;
+
+  }
+
+
+  tambahProdukKeKeranjang(
+    produk,
+    varian
+  );
+
+
+  bukaCheckout();
+
+}
 
 /* =========================
    PENCARIAN
