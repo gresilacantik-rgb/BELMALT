@@ -2940,6 +2940,7 @@ function tampilkanKeranjang(){
 
   if(!box) return;
 
+
   if(keranjang.length === 0){
 
     box.innerHTML = `
@@ -2969,9 +2970,11 @@ function tampilkanKeranjang(){
     return;
   }
 
+
   let html = "";
 
   let total = 0;
+
 
   keranjang.forEach(function(item,index){
 
@@ -2979,6 +2982,7 @@ function tampilkanKeranjang(){
       item.harga * item.jumlah;
 
     total += subtotal;
+
 
     const fotoProduk =
       item.image_url
@@ -3010,6 +3014,56 @@ function tampilkanKeranjang(){
         </div>
         `;
 
+
+    const infoVarian = `
+
+      ${
+        item.ukuran
+        ? `
+          <div>
+            📏 Ukuran:
+            <b>${escapeHTML(item.ukuran)}</b>
+          </div>
+        `
+        : ""
+      }
+
+      ${
+        item.warna
+        ? `
+          <div>
+            🎨 Warna:
+            <b>${escapeHTML(item.warna)}</b>
+          </div>
+        `
+        : ""
+      }
+
+      ${
+        item.kode
+        ? `
+          <div>
+            🏷️ Kode:
+            <b>${escapeHTML(item.kode)}</b>
+          </div>
+        `
+        : ""
+      }
+
+      ${
+        item.merk
+        ? `
+          <div>
+            🔖 Merk:
+            <b>${escapeHTML(item.merk)}</b>
+          </div>
+        `
+        : ""
+      }
+
+    `;
+
+
     html += `
 
       <div class="card">
@@ -3022,15 +3076,41 @@ function tampilkanKeranjang(){
 
           </div>
 
+
           <div class="item-detail">
 
             <div class="item-nama">
               ${escapeHTML(item.nama)}
             </div>
 
+
             <div class="item-harga">
               ${rupiah(item.harga)}
             </div>
+
+
+            ${
+              item.varian_id
+              ? `
+                <div
+                  style="
+                    margin-top:6px;
+                    padding:7px;
+                    background:#f5f7fa;
+                    border-radius:8px;
+                    font-size:12px;
+                    color:#444;
+                    line-height:1.7">
+
+                  <b>📦 Varian dipilih</b>
+
+                  ${infoVarian}
+
+                </div>
+              `
+              : ""
+            }
+
 
             <div class="jumlah">
 
@@ -3056,6 +3136,7 @@ function tampilkanKeranjang(){
 
           </div>
 
+
           <button
             class="hapus"
             onclick="hapusItem(${index})">
@@ -3065,6 +3146,7 @@ function tampilkanKeranjang(){
           </button>
 
         </div>
+
 
         <div
           style="
@@ -3083,6 +3165,7 @@ function tampilkanKeranjang(){
 
   });
 
+
   html += `
 
     <div class="card">
@@ -3099,6 +3182,7 @@ function tampilkanKeranjang(){
 
       </div>
 
+
       <button
         class="checkout"
         onclick="bukaCheckout()">
@@ -3110,6 +3194,7 @@ function tampilkanKeranjang(){
     </div>
 
   `;
+
 
   box.innerHTML = html;
 
@@ -3392,64 +3477,207 @@ tampilkanRingkasan();
 
 function tampilkanRingkasan(){
 
-const box=
-document.getElementById("ringkasanPesanan");
+  const box =
+    document.getElementById("ringkasanPesanan");
 
-if(!box) return;
+  if(!box) return;
 
-let total=0;
 
-let html="";
+  let total = 0;
 
-keranjang.forEach(function(item){
+  let html = "";
 
-const subtotal=
-item.harga*item.jumlah;
 
-total+=subtotal;
+  keranjang.forEach(function(item){
 
-html+=`
+    const subtotal =
+      item.harga * item.jumlah;
 
-<div class="ringkasan-item">
+    total += subtotal;
 
-<span>
-${item.nama} x${item.jumlah}
-</span>
 
-<strong>
-${rupiah(subtotal)}
-</strong>
+    const foto =
+      item.image_url
+      ? `
+        <img
+          src="${escapeHTML(item.image_url)}"
+          alt="${escapeHTML(item.nama)}"
+          style="
+            width:60px;
+            height:60px;
+            object-fit:cover;
+            border-radius:8px;
+            border:1px solid #ddd;">
+        `
+      : `
+        <div
+          style="
+            width:60px;
+            height:60px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            background:#f5f5f5;
+            border-radius:8px;
+            font-size:26px">
 
-</div>
+          ${item.icon || "📦"}
 
-`;
+        </div>
+        `;
 
-});
 
-const ongkir=
-biayaPengiriman();
+    const varian = `
 
-html+=`
+      ${
+        item.ukuran
+        ? `
+          <div>
+            📏 Ukuran:
+            <b>${escapeHTML(item.ukuran)}</b>
+          </div>
+        `
+        : ""
+      }
 
-<div class="ringkasan-item">
+      ${
+        item.warna
+        ? `
+          <div>
+            🎨 Warna:
+            <b>${escapeHTML(item.warna)}</b>
+          </div>
+        `
+        : ""
+      }
 
-<span>
-Ongkir
-</span>
+      ${
+        item.kode
+        ? `
+          <div>
+            🏷️ Kode:
+            <b>${escapeHTML(item.kode)}</b>
+          </div>
+        `
+        : ""
+      }
 
-<strong>
-${rupiah(ongkir)}
-</strong>
+      ${
+        item.merk
+        ? `
+          <div>
+            🔖 Merk:
+            <b>${escapeHTML(item.merk)}</b>
+          </div>
+        `
+        : ""
+      }
 
-</div>
+    `;
 
-`;
 
-box.innerHTML=html;
+    html += `
 
-document.getElementById("totalCheckout")
-.innerText=
-rupiah(total+ongkir);
+      <div
+        style="
+          display:flex;
+          gap:10px;
+          padding:10px 0;
+          border-bottom:1px solid #eee">
+
+        <div>
+
+          ${foto}
+
+        </div>
+
+
+        <div style="flex:1">
+
+          <div
+            style="
+              font-weight:bold;
+              margin-bottom:4px">
+
+            ${escapeHTML(item.nama)}
+
+          </div>
+
+
+          <div
+            style="
+              font-size:12px;
+              color:#777">
+
+            Jumlah: ${item.jumlah}
+
+          </div>
+
+
+          ${
+            item.varian_id
+            ? `
+              <div
+                style="
+                  margin-top:6px;
+                  padding:7px;
+                  background:#f5f7fa;
+                  border-radius:7px;
+                  font-size:12px;
+                  line-height:1.6">
+
+                <b>📦 Varian dipilih</b>
+
+                ${varian}
+
+              </div>
+            `
+            : ""
+          }
+
+        </div>
+
+
+        <strong>
+          ${rupiah(subtotal)}
+        </strong>
+
+      </div>
+
+    `;
+
+  });
+
+
+  const ongkir =
+    biayaPengiriman();
+
+
+  html += `
+
+    <div
+      class="ringkasan-item"
+      style="margin-top:10px">
+
+      <span>
+        Ongkir
+      </span>
+
+      <strong>
+        ${rupiah(ongkir)}
+      </strong>
+
+    </div>
+
+  `;
+
+
+  box.innerHTML = html;
+
+
+  document.getElementById("totalCheckout")
+    .innerText =
+    rupiah(total + ongkir);
 
 }
 
@@ -3649,25 +3877,43 @@ async function buatPesanan(){
   // ==========================
 
   const itemPesanan =
-    keranjang.map(function(item){
+  keranjang.map(function(item){
 
-      return {
+    return {
 
-        Order_id:
-          pesananBaru.id,
+      Order_id:
+        pesananBaru.id,
 
-        product_id:
-          item.id,
+      product_id:
+        item.id,
 
-        Jumlah:
-          Number(item.jumlah),
+      Jumlah:
+        Number(item.jumlah),
 
-        Harga:
-          Number(item.harga)
+      Harga:
+        Number(item.harga),
 
-      };
+      "Varian-id":
+        item.varian_id || null,
 
-    });
+      "Ukuran":
+        item.ukuran || null,
+
+      "Warna":
+        item.warna || null,
+
+      "Kode":
+        item.kode || null,
+
+      "Merk":
+        item.merk || null,
+
+      "Image-url":
+        item.image_url || null
+
+    };
+
+  });
 
 
   const { error: itemError } =
