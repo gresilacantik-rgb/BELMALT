@@ -10091,38 +10091,39 @@ function tambahProduk(){
 
     </div>
 
-    <div class="form-group">
+ <div class="form-group">
 
-      <label>📷 Foto Produk</label>
+  <label>📷 Foto & Varian Produk</label>
 
-      <input
-        id="produkGambar"
-        type="file"
-        accept="image/*"
-        onchange="previewFotoProduk(event)"
-        style="display:none;">
+  <input
+    id="produkGambar"
+    type="file"
+    accept="image/*"
+    multiple
+    onchange="pilihFotoVarian(event)"
+    style="display:none;">
 
-      <button
-        type="button"
-        class="checkout"
-        onclick="document.getElementById('produkGambar').click()">
+  <button
+    type="button"
+    class="checkout"
+    onclick="document.getElementById('produkGambar').click()">
 
-        📷 Pilih Foto dari Galeri
+    📷 Pilih Foto dari Galeri
 
-      </button>
+  </button>
 
-      <div
-        id="previewFoto"
-        style="
-          margin-top:10px;
-          text-align:center;">
-      </div>
+  <div
+    id="previewFoto"
+    style="
+      margin-top:10px;
+      text-align:left;">
+  </div>
 
-      <small>
-        Pilih foto produk dari Galeri HP
-      </small>
+  <small>
+    Maksimal 10 foto. Varian setiap foto boleh diisi atau dikosongkan.
+  </small>
 
-    </div>
+</div>
 
     <button
       class="checkout"
@@ -10152,74 +10153,236 @@ function tambahProduk(){
 
 }
 
-function previewFotoProduk(event){
+let daftarFotoVarian = [];
 
-  const file = event.target.files[0];
+function pilihFotoVarian(event){
+
+  const files =
+    Array.from(event.target.files || []);
 
   const preview =
     document.getElementById("previewFoto");
 
-  if(!file || !preview){
+  if(!preview){
     return;
   }
 
-  // Pastikan file berupa gambar
-  if(!file.type.startsWith("image/")){
+  if(files.length === 0){
+    return;
+  }
+
+  if(
+    daftarFotoVarian.length +
+    files.length > 10
+  ){
 
     pesan(
-      "File yang dipilih harus berupa foto"
+      "Maksimal 10 foto produk"
     );
 
     event.target.value = "";
+
+    return;
+  }
+
+
+  for(const file of files){
+
+    if(!file.type.startsWith("image/")){
+
+      pesan(
+        "Semua file harus berupa foto"
+      );
+
+      continue;
+    }
+
+
+    if(file.size > 5 * 1024 * 1024){
+
+      pesan(
+        "Setiap foto maksimal 5 MB"
+      );
+
+      continue;
+    }
+
+
+    daftarFotoVarian.push({
+      file:file,
+      preview:URL.createObjectURL(file),
+      size:"",
+      color:"",
+      code:"",
+      brand:""
+    });
+
+  }
+
+
+  event.target.value = "";
+
+
+  renderFotoVarian();
+
+}
+
+
+function renderFotoVarian(){
+
+  const preview =
+    document.getElementById("previewFoto");
+
+  if(!preview){
+    return;
+  }
+
+
+  if(daftarFotoVarian.length === 0){
 
     preview.innerHTML = "";
 
     return;
   }
 
-  // Maksimal 5 MB
-  if(file.size > 5 * 1024 * 1024){
 
-    pesan(
-      "Ukuran foto maksimal 5 MB"
+  preview.innerHTML = daftarFotoVarian
+    .map(function(item,index){
+
+      return `
+
+        <div
+          style="
+            border:1px solid #ddd;
+            border-radius:12px;
+            padding:10px;
+            margin-bottom:12px;
+            background:#fff">
+
+          <div
+            style="
+              display:flex;
+              align-items:center;
+              gap:10px">
+
+            <img
+              src="${item.preview}"
+              style="
+                width:90px;
+                height:90px;
+                object-fit:cover;
+                border-radius:10px">
+
+            <div style="flex:1">
+
+              <b>
+                Foto ${index + 1}
+              </b>
+
+              <div
+                style="
+                  font-size:12px;
+                  color:#777;
+                  margin-top:4px">
+
+                Maksimal 10 foto
+
+              </div>
+
+            </div>
+
+            <button
+              type="button"
+              onclick="hapusFotoVarian(${index})"
+              style="
+                border:none;
+                background:#ffebee;
+                color:#d32f2f;
+                border-radius:8px;
+                padding:8px">
+
+              🗑️
+
+            </button>
+
+          </div>
+
+
+          <input
+            type="text"
+            placeholder="Ukuran (opsional)"
+            value="${item.size}"
+            oninput="daftarFotoVarian[${index}].size=this.value"
+            style="
+              width:100%;
+              margin-top:10px;
+              padding:10px;
+              box-sizing:border-box">
+
+          <input
+            type="text"
+            placeholder="Warna (opsional)"
+            value="${item.color}"
+            oninput="daftarFotoVarian[${index}].color=this.value"
+            style="
+              width:100%;
+              margin-top:8px;
+              padding:10px;
+              box-sizing:border-box">
+
+          <input
+            type="text"
+            placeholder="Kode (opsional)"
+            value="${item.code}"
+            oninput="daftarFotoVarian[${index}].code=this.value"
+            style="
+              width:100%;
+              margin-top:8px;
+              padding:10px;
+              box-sizing:border-box">
+
+          <input
+            type="text"
+            placeholder="Merk (opsional)"
+            value="${item.brand}"
+            oninput="daftarFotoVarian[${index}].brand=this.value"
+            style="
+              width:100%;
+              margin-top:8px;
+              padding:10px;
+              box-sizing:border-box">
+
+        </div>
+
+      `;
+
+    })
+    .join("");
+
+}
+
+
+function hapusFotoVarian(index){
+
+  if(
+    daftarFotoVarian[index] &&
+    daftarFotoVarian[index].preview
+  ){
+
+    URL.revokeObjectURL(
+      daftarFotoVarian[index].preview
     );
 
-    event.target.value = "";
-
-    preview.innerHTML = "";
-
-    return;
   }
 
-  const reader = new FileReader();
 
-  reader.onload = function(e){
+  daftarFotoVarian.splice(
+    index,
+    1
+  );
 
-    preview.innerHTML = `
 
-      <img
-        src="${e.target.result}"
-        alt="Preview foto produk"
-        style="
-          width:150px;
-          height:150px;
-          object-fit:cover;
-          border-radius:12px;
-          border:1px solid #ddd;">
-
-      <p style="
-        font-size:12px;
-        color:#777;">
-
-        Foto berhasil dipilih
-
-      </p>
-
-    `;
-
-  };
-
-  reader.readAsDataURL(file);
+  renderFotoVarian();
 
 }
 
@@ -10261,6 +10424,7 @@ async function simpanProduk(){
     return;
   }
 
+
   const nama =
     document.getElementById("produkNama").value.trim();
 
@@ -10283,11 +10447,6 @@ async function simpanProduk(){
   const deskripsi =
     document.getElementById("produkDeskripsi").value.trim();
 
-  const fileInput =
-    document.getElementById("produkGambar");
-
-  const file =
-    fileInput ? fileInput.files[0] : null;
 
   if(!nama){
 
@@ -10317,83 +10476,89 @@ async function simpanProduk(){
     return;
   }
 
-  if(!file){
+
+  if(
+    !daftarFotoVarian ||
+    daftarFotoVarian.length === 0
+  ){
 
     pesan(
-      "Silakan pilih foto produk dari Galeri"
+      "Silakan pilih minimal 1 foto produk"
     );
 
     return;
   }
 
-  if(!file.type.startsWith("image/")){
+
+  if(daftarFotoVarian.length > 10){
 
     pesan(
-      "File yang dipilih harus berupa gambar"
+      "Maksimal 10 foto produk"
     );
 
     return;
   }
 
-  if(file.size > 5 * 1024 * 1024){
 
-    pesan(
-      "Ukuran foto maksimal 5 MB"
-    );
+  /*
+    UPLOAD FOTO PERTAMA
+    menjadi foto utama produk
+  */
 
-    return;
-  }
+  const fotoPertama =
+    daftarFotoVarian[0];
 
-  const namaFile =
+  const namaFileUtama =
     pengguna.id +
     "_" +
     Date.now() +
     "_" +
-    file.name.replace(
+    fotoPertama.file.name.replace(
       /[^a-zA-Z0-9.-]/g,
       "_"
     );
 
-  const path =
-    namaFile;
-
-  const { error: uploadError } =
+  const { error: uploadUtamaError } =
     await supabaseClient
       .storage
       .from("product-images")
       .upload(
-        path,
-        file,
+        namaFileUtama,
+        fotoPertama.file,
         {
-          cacheControl: "3600",
-          upsert: false
+          cacheControl:"3600",
+          upsert:false
         }
       );
 
-  if(uploadError){
+  if(uploadUtamaError){
 
     console.error(
-      "Upload foto produk gagal:",
-      uploadError
+      "Upload foto utama gagal:",
+      uploadUtamaError
     );
 
     pesan(
       "Foto gagal diupload: " +
-      uploadError.message
+      uploadUtamaError.message
     );
 
     return;
   }
 
-  const { data: publicUrlData } =
+
+  const { data: publicUtama } =
     supabaseClient
       .storage
       .from("product-images")
-      .getPublicUrl(path);
+      .getPublicUrl(
+        namaFileUtama
+      );
+
 
   if(
-    !publicUrlData ||
-    !publicUrlData.publicUrl
+    !publicUtama ||
+    !publicUtama.publicUrl
   ){
 
     pesan(
@@ -10403,37 +10568,44 @@ async function simpanProduk(){
     return;
   }
 
-  const gambar =
-    publicUrlData.publicUrl;
 
-  const { error } =
+  const gambarUtama =
+    publicUtama.publicUrl;
+
+
+  /*
+    SIMPAN PRODUK UTAMA
+  */
+
+  const { data: produk, error } =
     await supabaseClient
       .from("products")
       .insert({
 
-        name: nama,
+        name:nama,
 
-        price: harga,
+        price:harga,
 
-        stock: stok,
+        stock:stok,
 
-        category: kategori,
+        category:kategori,
 
-        location: lokasi,
+        location:lokasi,
 
-        description: deskripsi,
+        description:deskripsi,
 
-        image_url: gambar,
+        image_url:gambarUtama,
 
-        active: true,
+        active:true,
 
-        seller_id: pengguna.id,
+        seller_id:pengguna.id,
 
-        shop_id: toko.id
+        shop_id:toko.id
 
       })
       .select()
       .single();
+
 
   if(error){
 
@@ -10450,9 +10622,174 @@ async function simpanProduk(){
     return;
   }
 
+
+  /*
+    SIMPAN VARIAN
+  */
+
+  for(
+    let i = 0;
+    i < daftarFotoVarian.length;
+    i++
+  ){
+
+    const item =
+      daftarFotoVarian[i];
+
+
+    let imageUrl =
+      "";
+
+
+    /*
+      FOTO PERTAMA SUDAH DIUPLOAD
+    */
+
+    if(i === 0){
+
+      imageUrl =
+        gambarUtama;
+
+    }else{
+
+      const namaFile =
+        pengguna.id +
+        "_" +
+        Date.now() +
+        "_" +
+        i +
+        "_" +
+        item.file.name.replace(
+          /[^a-zA-Z0-9.-]/g,
+          "_"
+        );
+
+
+      const { error: uploadError } =
+        await supabaseClient
+          .storage
+          .from("product-images")
+          .upload(
+            namaFile,
+            item.file,
+            {
+              cacheControl:"3600",
+              upsert:false
+            }
+          );
+
+
+      if(uploadError){
+
+        console.error(
+          "Upload foto varian gagal:",
+          uploadError
+        );
+
+        pesan(
+          "Foto varian ke-" +
+          (i + 1) +
+          " gagal diupload"
+        );
+
+        return;
+      }
+
+
+      const { data: publicUrlData } =
+        supabaseClient
+          .storage
+          .from("product-images")
+          .getPublicUrl(
+            namaFile
+          );
+
+
+      if(
+        publicUrlData &&
+        publicUrlData.publicUrl
+      ){
+
+        imageUrl =
+          publicUrlData.publicUrl;
+
+      }
+
+    }
+
+
+    /*
+      SIMPAN DATA VARIAN
+    */
+
+    const {
+      error: variantError
+    } =
+      await supabaseClient
+        .from("product_variants")
+        .insert({
+
+          product_id:produk.id,
+
+          image_url:imageUrl,
+
+          size:item.size || null,
+
+          color:item.color || null,
+
+          code:item.code || null,
+
+          brand:item.brand || null
+
+        });
+
+
+    if(variantError){
+
+      console.error(
+        "Gagal menyimpan varian:",
+        variantError
+      );
+
+      pesan(
+        "Varian foto ke-" +
+        (i + 1) +
+        " gagal disimpan: " +
+        variantError.message
+      );
+
+      return;
+    }
+
+  }
+
+
+  /*
+    BERHASIL
+  */
+
+  daftarFotoVarian.forEach(
+    function(item){
+
+      if(item.preview){
+
+        URL.revokeObjectURL(
+          item.preview
+        );
+
+      }
+
+    }
+  );
+
+
+  daftarFotoVarian = [];
+
+
   pesan(
     "Produk berhasil ditambahkan 🎉"
   );
+
 
   tokoSaya();
 
