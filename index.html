@@ -5618,8 +5618,66 @@ async function riwayatPesanan(){
 
 
             const gambar =
-              product?.image_url ||
-              "";
+  item["Image-url"] ||
+  product?.image_url ||
+  "";
+
+
+const infoVarian = `
+
+  ${
+    item["Ukuran"]
+    ? `
+      <div>
+        📏 Ukuran:
+        <b>${escapeHTML(
+          String(item["Ukuran"])
+        )}</b>
+      </div>
+    `
+    : ""
+  }
+
+  ${
+    item["Warna"]
+    ? `
+      <div>
+        🎨 Warna:
+        <b>${escapeHTML(
+          String(item["Warna"])
+        )}</b>
+      </div>
+    `
+    : ""
+  }
+
+  ${
+    item["Kode"]
+    ? `
+      <div>
+        🏷️ Kode:
+        <b>${escapeHTML(
+          String(item["Kode"])
+        )}</b>
+      </div>
+    `
+    : ""
+  }
+
+  ${
+    item["Merk"]
+    ? `
+      <div>
+        🔖 Merk:
+        <b>${escapeHTML(
+          String(item["Merk"])
+        )}</b>
+      </div>
+    `
+    : ""
+  }
+
+`;
 
 
             return `
@@ -5711,6 +5769,26 @@ async function riwayatPesanan(){
                     ${rupiah(harga)}
 
                   </div>
+                  ${
+  item["Varian-id"]
+  ? `
+    <div
+      style="
+        margin-top:8px;
+        padding:8px;
+        background:#f5f7fa;
+        border-radius:8px;
+        font-size:12px;
+        line-height:1.7">
+
+      <b>📦 Varian pesanan</b>
+
+      ${infoVarian}
+
+    </div>
+  `
+  : ""
+                  }
 
 
                   <div style="
@@ -8890,15 +8968,19 @@ async function bukaPesananKategori(kategori){
                     border-top:1px solid #eee">
 
                     ${
-                      produkItem &&
-                      produkItem.image_url
+  (
+    item["Image-url"] ||
+    produkItem?.image_url
+  )
 
-                      ? `
+  ? `
 
-                        <img
-                          src="${escapeHTML(
-                            produkItem.image_url
-                          )}"
+    <img
+      src="${escapeHTML(
+        item["Image-url"] ||
+        produkItem?.image_url ||
+        ""
+      )}"
                           style="
                             width:65px;
                             height:65px;
@@ -8961,6 +9043,78 @@ async function bukaPesananKategori(kategori){
                         )}
 
                       </div>
+                      ${
+  item["Varian-id"]
+  ? `
+
+    <div
+      style="
+        margin-top:7px;
+        padding:8px;
+        background:#f5f7fa;
+        border-radius:8px;
+        font-size:12px;
+        line-height:1.7">
+
+      <b>📦 Varian pesanan</b>
+
+      ${
+        item["Ukuran"]
+        ? `
+          <div>
+            📏 Ukuran:
+            <b>${escapeHTML(
+              String(item["Ukuran"])
+            )}</b>
+          </div>
+        `
+        : ""
+      }
+
+      ${
+        item["Warna"]
+        ? `
+          <div>
+            🎨 Warna:
+            <b>${escapeHTML(
+              String(item["Warna"])
+            )}</b>
+          </div>
+        `
+        : ""
+      }
+
+      ${
+        item["Kode"]
+        ? `
+          <div>
+            🏷️ Kode:
+            <b>${escapeHTML(
+              String(item["Kode"])
+            )}</b>
+          </div>
+        `
+        : ""
+      }
+
+      ${
+        item["Merk"]
+        ? `
+          <div>
+            🔖 Merk:
+            <b>${escapeHTML(
+              String(item["Merk"])
+            )}</b>
+          </div>
+        `
+        : ""
+      }
+
+    </div>
+
+  `
+  : ""
+}
 
 
                       <div style="
