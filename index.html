@@ -7311,6 +7311,53 @@ function akun(){
     </p>
 
   </div>
+  <div class="card"
+  style="
+    background:linear-gradient(
+      135deg,
+      #1261C9,
+      #0b4fa8
+    );
+    color:white;
+    border-radius:14px">
+
+  <div style="
+    font-size:13px;
+    opacity:.9">
+
+    💰 Saldo BELMALT
+
+  </div>
+
+  <div
+    id="saldoBELMALT"
+    style="
+      font-size:26px;
+      font-weight:bold;
+      margin-top:8px">
+
+    Rp0
+
+  </div>
+
+  <button
+    onclick="bukaSaldoBELMALT()"
+    style="
+      margin-top:12px;
+      width:100%;
+      padding:11px;
+      border:none;
+      border-radius:9px;
+      background:white;
+      color:#1261C9;
+      font-weight:bold;
+      cursor:pointer">
+
+    💳 Kelola Saldo
+
+  </button>
+
+</div>
 
   <div class="card">
 
@@ -7351,6 +7398,49 @@ function akun(){
   </div>
 
   `;
+  muatSaldoBELMALT();
+
+}
+
+  async function muatSaldoBELMALT(){
+
+  if(!pengguna || !pengguna.id){
+    return;
+  }
+
+  const saldoBox =
+    document.getElementById("saldoBELMALT");
+
+  if(!saldoBox){
+    return;
+  }
+
+  const { data, error } =
+    await supabaseClient
+      .from("wallets")
+      .select("balance")
+      .eq("user_id", pengguna.id)
+      .maybeSingle();
+
+  if(error){
+
+    console.error(
+      "Gagal mengambil saldo:",
+      error
+    );
+
+    saldoBox.innerText = "Rp0";
+
+    return;
+  }
+
+  const saldo =
+    data
+    ? Number(data.balance || 0)
+    : 0;
+
+  saldoBox.innerText =
+    rupiah(saldo);
 
 }
 
