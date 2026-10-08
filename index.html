@@ -7444,6 +7444,138 @@ function akun(){
 
 }
 
+  function bukaSaldoBELMALT(){
+
+  setNav("navAkun");
+
+  document.getElementById("halaman").innerHTML = `
+
+    <div class="judul">
+      💰 Saldo BELMALT
+    </div>
+
+    <div class="card"
+      style="
+        text-align:center;
+        background:linear-gradient(
+          135deg,
+          #1261C9,
+          #0b4fa8
+        );
+        color:white;
+        border-radius:14px">
+
+      <div style="
+        font-size:13px;
+        opacity:.9">
+
+        Saldo tersedia
+
+      </div>
+
+      <div id="saldoHalamanBELMALT"
+        style="
+          font-size:30px;
+          font-weight:bold;
+          margin-top:8px">
+
+        Rp0
+
+      </div>
+
+    </div>
+
+    <div class="card">
+
+      <button
+        class="checkout"
+        onclick="pesan('Fitur Top Up akan segera tersedia')">
+
+        ➕ Top Up Saldo
+
+      </button>
+
+      <button
+        class="checkout secondary"
+        onclick="pesan('Fitur Tarik Saldo akan segera tersedia')">
+
+        💸 Tarik Saldo
+
+      </button>
+
+      <button
+        class="checkout secondary"
+        onclick="pesan('Riwayat transaksi saldo akan segera tersedia')">
+
+        📋 Riwayat Saldo
+
+      </button>
+
+    </div>
+
+    <div class="card"
+      style="
+        font-size:12px;
+        color:#777;
+        line-height:1.6">
+
+      💡 Saldo BELMALT nantinya dapat digunakan
+      untuk transaksi di dalam aplikasi dan
+      dapat ditarik ke rekening atau e-wallet.
+
+    </div>
+
+  `;
+
+  muatSaldoHalamanBELMALT();
+
+}
+
+
+async function muatSaldoHalamanBELMALT(){
+
+  if(!pengguna || !pengguna.id){
+    return;
+  }
+
+  const saldoBox =
+    document.getElementById(
+      "saldoHalamanBELMALT"
+    );
+
+  if(!saldoBox){
+    return;
+  }
+
+  const { data, error } =
+    await supabaseClient
+      .from("wallets")
+      .select("balance")
+      .eq("user_id", pengguna.id)
+      .maybeSingle();
+
+  if(error){
+
+    console.error(
+      "Gagal mengambil saldo:",
+      error
+    );
+
+    saldoBox.innerText = "Rp0";
+
+    return;
+  }
+
+  const saldo =
+    data
+    ? Number(data.balance || 0)
+    : 0;
+
+  saldoBox.innerText =
+    rupiah(saldo);
+
+}
+
 async function tokoSaya(){
 
   if(!pengguna || !pengguna.id){
